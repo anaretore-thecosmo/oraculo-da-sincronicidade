@@ -1,0 +1,85 @@
+@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;0,700;1,300;1,400;1,500;1,600;1,700&family=Inter:wght@300;400;500;600&display=swap');
+@import "tailwindcss";
+
+@theme {
+  --font-serif: "Cormorant Garamond", serif;
+  --font-sans: "Inter", sans-serif;
+  --color-gold: #C5A059;
+  --color-mystic-dark: var(--bg-color);
+  --color-mystic-paper: var(--text-color);
+  
+  --color-panel-bg: var(--panel-bg);
+  --color-panel-border: var(--panel-border);
+}
+
+:root {
+  --bg-color: #0A0A0B;
+  --text-color: #F5F2ED;
+  --panel-bg: rgba(255, 255, 255, 0.05);
+  --panel-border: rgba(255, 255, 255, 0.1);
+}
+
+:root.light {
+  --bg-color: #F5F2ED;
+  --text-color: #0A0A0B;
+  --panel-bg: rgba(0, 0, 0, 0.03);
+  --panel-border: rgba(0, 0, 0, 0.08);
+}
+
+body {
+  @apply bg-mystic-dark text-mystic-paper font-sans antialiased transition-colors duration-700;
+}
+
+.serif {
+  @apply font-serif;
+}
+
+.markdown-body h1, .markdown-body h2, .markdown-body h3 {
+  @apply font-serif font-medium tracking-tight text-gold mt-12 mb-6;
+}
+
+.markdown-body h1 { @apply text-4xl border-b border-gold/20 pb-4; }
+.markdown-body h2 { @apply text-3xl; }
+.markdown-body h3 { @apply text-xl uppercase tracking-widest opacity-80; }
+
+.markdown-body p {
+  @apply mb-8 leading-relaxed opacity-80 text-lg;
+}
+
+.markdown-body strong {
+  @apply text-gold font-semibold;
+}
+
+.markdown-body ul, .markdown-body ol {
+  @apply mb-8 space-y-4 opacity-80;
+}
+
+.markdown-body li {
+  @apply ml-4 list-disc marker:text-gold;
+}
+
+.glass-panel {
+  @apply bg-panel-bg backdrop-blur-xl border border-panel-border rounded-2xl;
+}
+
+@keyframes float {
+  0% { transform: translateY(0px); }
+  50% { transform: translateY(-10px); }
+  100% { transform: translateY(0px); }
+}
+
+.animate-float {
+  animation: float 6s ease-in-out infinite;
+}
+
+.preserve-3d {
+  transform-style: preserve-3d;
+}
+
+.backface-hidden {
+  backface-visibility: hidden;
+}
+
+.rotate-y-180 {
+  transform: rotateY(180deg);
+}

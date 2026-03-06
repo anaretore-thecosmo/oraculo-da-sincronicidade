@@ -1,0 +1,5 @@
+{
+  "name": "Oráculo da Sincronicidade",
+  "description": "A sabedoria ancestral das cartas encontra o campo inteligente que organiza os acontecimentos.",
+  "requestFramePermissions": ["microphone"]
+}
