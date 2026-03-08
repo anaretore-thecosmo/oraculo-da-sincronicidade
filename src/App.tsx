@@ -11,7 +11,7 @@ import ReactMarkdown from 'react-markdown';
 
 // --- Constants & Types ---
 
-const MODEL_NAME = "gemini-2.5-flash";
+const MODEL_NAME = "gemini-1.5-flash";
 const TTS_MODEL = "gemini-2.5-flash-preview-tts";
 const IMAGE_MODEL = "gemini-2.5-flash-image";
 
@@ -745,12 +745,6 @@ Sincronicidade & Inteligência Artificial.
       }
 
       const ai = new GoogleGenAI({ apiKey });
-      const chat = ai.chats.create({
-        model: MODEL_NAME,
-        config: {
-          systemInstruction: SYSTEM_INSTRUCTION,
-        }
-      });
 
       const depthText = depth < 300 ? "direta e prática" : depth > 700 ? "profunda, espiritual e cármica" : "equilibrada";
       const modeInfo = READING_MODES.find(m => m.id === readingMode);
@@ -765,19 +759,24 @@ Sincronicidade & Inteligência Artificial.
         modeInstructions = "Analise como um Quadrado de 9 (3x3). Cada uma das 9 casas é composta por uma tríade: Arcano Maior + Arcano Menor + Baralho Cigano.";
       }
 
-      const response = await chat.sendMessage({ 
-        message: `Sou a Sacerdotisa Visionária. Realize o Diagnóstico da Sincronicidade.
-        Tríades por posição:
-        Arcanos Maiores: ${major.join(', ')}
-        Arcanos Menores: ${minor.join(', ')}
-        Baralho Cigano: ${gypsy.join(', ')}
-        
-        Modo: ${modeText}. 
-        Instruções: ${modeInstructions}
-        Profundidade: ${depthText}.
-        Pergunta: ${currentInput}.` 
+      const prompt = `${SYSTEM_INSTRUCTION}
+
+Sou a Sacerdotisa Visionária. Realize o Diagnóstico da Sincronicidade.
+Tríades por posição:
+Arcanos Maiores: ${major.join(', ')}
+Arcanos Menores: ${minor.join(', ')}
+Baralho Cigano: ${gypsy.join(', ')}
+
+Modo: ${modeText}.
+Instruções: ${modeInstructions}
+Profundidade: ${depthText}.
+Pergunta: ${currentInput}.`;
+
+      const response = await ai.models.generateContent({
+        model: MODEL_NAME,
+        contents: prompt,
       });
-      
+
       const assistantMessage: Message = {
         role: 'assistant',
         content: response.text || "O silêncio do destino é uma resposta, mas aqui houve uma falha na conexão.",
