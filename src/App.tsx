@@ -11,7 +11,7 @@ import ReactMarkdown from 'react-markdown';
 
 // --- Constants & Types ---
 
-const MODEL_NAME = "gemini-2.0-flash";
+const MODEL_NAME = "gemini-2.0-flash-lite";
 const TTS_MODEL = "gemini-2.5-flash-preview-tts";
 const IMAGE_MODEL = "gemini-2.5-flash-image";
 
@@ -792,7 +792,7 @@ Pergunta: ${currentInput}.`;
       if (msg.includes("api_key") || msg.includes("api key") || msg.includes("invalid") && msg.includes("key")) {
         errorMessage = "Chave de API inválida. Verifique se copiou corretamente em aistudio.google.com.";
       } else if (msg.includes("429") || msg.includes("quota") || msg.includes("resource_exhausted") || msg.includes("rate limit") || msg.includes("limit: 0")) {
-        errorMessage = "Sua chave de API atingiu o limite de uso gratuito. Gere uma nova chave em aistudio.google.com e insira aqui.";
+        errorMessage = "Chave sem acesso ao Gemini. Acesse aistudio.google.com → clique no seu projeto → Billing → ative o faturamento (não cobra nada no plano gratuito). Depois gere uma nova chave.";
       } else if (msg.includes("403") || msg.includes("permission") || msg.includes("forbidden")) {
         errorMessage = "Chave de API sem permissão. Certifique-se de que a Gemini API está ativa no seu projeto Google.";
       }
