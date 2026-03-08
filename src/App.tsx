@@ -11,7 +11,7 @@ import ReactMarkdown from 'react-markdown';
 
 // --- Constants & Types ---
 
-const MODEL_NAME = "gemini-1.5-flash";
+const MODEL_NAME = "gemini-2.0-flash";
 const TTS_MODEL = "gemini-2.5-flash-preview-tts";
 const IMAGE_MODEL = "gemini-2.5-flash-image";
 
