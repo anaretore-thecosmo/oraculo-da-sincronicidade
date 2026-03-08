@@ -11,7 +11,7 @@ import ReactMarkdown from 'react-markdown';
 
 // --- Constants & Types ---
 
-const MODEL_NAME = "gemini-3.1-pro-preview";
+const MODEL_NAME = "gemini-2.0-flash";
 const TTS_MODEL = "gemini-2.5-flash-preview-tts";
 const IMAGE_MODEL = "gemini-2.5-flash-image";
 
@@ -466,7 +466,7 @@ export default function App() {
       
       const ai = new GoogleGenAI({ apiKey: userApiKey });
       const response = await ai.models.generateContent({
-        model: "gemini-3-flash-preview",
+        model: "gemini-2.0-flash",
         contents: `Dê um conselho de uma frase curta e profunda baseado na carta de tarot "${randomCard}". Seja místico e direto. Responda em Português.`,
       });
       
@@ -926,7 +926,7 @@ Sincronicidade & Inteligência Artificial.
       
       // First, extract energy themes, colors and symbols
       const summaryResponse = await ai.models.generateContent({
-        model: "gemini-3-flash-preview",
+        model: "gemini-2.0-flash",
         contents: `Analise esta leitura de tarot e identifique as 3 cores vibrantes predominantes e os 2 símbolos arquetípicos centrais que representam essa energia. Responda apenas com as cores e símbolos: ${content}`,
       });
       
