@@ -749,7 +749,6 @@ Sincronicidade & Inteligência Artificial.
         model: MODEL_NAME,
         config: {
           systemInstruction: SYSTEM_INSTRUCTION,
-          thinkingConfig: { thinkingLevel: ThinkingLevel.HIGH }
         }
       });
 
