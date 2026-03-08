@@ -1182,15 +1182,6 @@ Sincronicidade & Inteligência Artificial.
             animate={{ opacity: 1, scale: 1 }}
             className="max-w-3xl mx-auto w-full py-12 space-y-8"
           >
-            {error && (
-              <motion.div 
-                initial={{ opacity: 0, y: -10 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="p-6 rounded-2xl bg-red-500/10 border border-red-500/20 text-red-500 text-center text-sm serif italic"
-              >
-                {error}
-              </motion.div>
-            )}
             <div className="glass-panel p-12 space-y-12 relative overflow-hidden">
               <div className="absolute top-0 left-0 w-full h-1 bg-gold/20" />
               
@@ -1278,6 +1269,15 @@ Sincronicidade & Inteligência Artificial.
                   </div>
                 </div>
 
+                {error && (
+                  <motion.div
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="p-4 rounded-2xl bg-red-500/10 border border-red-500/20 text-red-400 text-center text-sm serif italic"
+                  >
+                    {error}
+                  </motion.div>
+                )}
                 <button
                   onClick={startSelection}
                   disabled={!input.trim()}
