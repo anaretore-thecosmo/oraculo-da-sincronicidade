@@ -787,7 +787,17 @@ Pergunta: ${currentInput}.`;
       setAppState('reading');
     } catch (err: any) {
       console.error("ERRO CRÍTICO NA LEITURA DO ORÁCULO:", err);
-      const errorMessage = `Erro: ${err?.message || JSON.stringify(err)}`;
+      let errorMessage = "Ocorreu um erro ao consultar o Oráculo. Tente novamente.";
+      const msg = err?.message || JSON.stringify(err);
+      if (msg.includes("API_KEY") || msg.includes("API key")) {
+        errorMessage = "Chave de API inválida ou não encontrada. Verifique e tente novamente.";
+      } else if (msg.includes("429") || msg.includes("quota") || msg.includes("RESOURCE_EXHAUSTED")) {
+        errorMessage = "Sua chave de API atingiu o limite de uso gratuito. Aguarde alguns minutos ou gere uma nova chave em aistudio.google.com.";
+      } else if (msg.includes("404") || msg.includes("not found") || msg.includes("model")) {
+        errorMessage = "O modelo espiritual está temporariamente indisponível. Tente em alguns instantes.";
+      } else if (msg.includes("fetch") || msg.includes("network") || msg.includes("Failed to fetch")) {
+        errorMessage = "Falha na conexão com o plano astral. Verifique sua internet e tente novamente.";
+      }
       setError(errorMessage);
       setAppState('input');
     } finally {
