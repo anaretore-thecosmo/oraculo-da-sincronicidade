@@ -1086,7 +1086,7 @@ Pergunta: ${currentInput}.`;
               onClick={() => setAppState('landing')}
               className="px-16 py-5 rounded-xl bg-gold text-mystic-dark uppercase tracking-[0.3em] text-xs font-bold hover:scale-[1.02] active:scale-[0.98] transition-all shadow-[0_0_30px_rgba(197,160,89,0.2)]"
             >
-              Acessar Portal Reset
+              Acessar Oráculo
             </button>
           </motion.div>
         )}
