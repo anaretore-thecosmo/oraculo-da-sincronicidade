@@ -788,16 +788,7 @@ Sincronicidade & Inteligência Artificial.
       setAppState('reading');
     } catch (err: any) {
       console.error("ERRO CRÍTICO NA LEITURA DO ORÁCULO:", err);
-      let errorMessage = "Ocorreu um erro ao consultar o Oráculo. Tente novamente.";
-      
-      if (err.message?.includes("API_KEY")) {
-        errorMessage = "A chave de API não foi encontrada ou é inválida. Verifique as configurações.";
-      } else if (err.message?.includes("model")) {
-        errorMessage = "O modelo espiritual está temporariamente indisponível. Tente em alguns instantes.";
-      } else if (err.message?.includes("fetch")) {
-        errorMessage = "Falha na conexão com o plano astral (erro de rede). Verifique sua internet.";
-      }
-      
+      const errorMessage = `Erro: ${err?.message || JSON.stringify(err)}`;
       setError(errorMessage);
       setAppState('input');
     } finally {
