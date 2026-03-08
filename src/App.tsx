@@ -371,8 +371,8 @@ function VoiceSession({ userApiKey, onBack }: { userApiKey: string, onBack: () =
 
 export default function App() {
   const [isDarkMode, setIsDarkMode] = useState(true);
-  const [userApiKey, setUserApiKey] = useState<string>(() => localStorage.getItem('oracle_api_key') || '');
-  const [appState, setAppState] = useState<AppState>(() => localStorage.getItem('oracle_api_key') ? 'landing' : 'auth');
+  const [userApiKey, setUserApiKey] = useState<string>('');
+  const [appState, setAppState] = useState<AppState>('auth');
   const [selectionPhase, setSelectionPhase] = useState<SelectionPhase>('major');
   const [readingMode, setReadingMode] = useState<ReadingMode>('3-cards');
   const [depth, setDepth] = useState(500);
@@ -455,22 +455,22 @@ export default function App() {
   }, []);
 
   const handleQuickAdvice = async () => {
-    if (!userApiKey) return;
     setIsGeneratingQuickAdvice(true);
     setShowQuickAdvice(true);
     setQuickAdvice(null);
-    
+
     try {
       const allCards = [...MAJOR_ARCANA, ...MINOR_ARCANA, ...GYPSY_TAROT];
       const randomCard = allCards[Math.floor(Math.random() * allCards.length)];
-      
-      const ai = new GoogleGenAI({ apiKey: userApiKey });
-      const response = await ai.models.generateContent({
-        model: "gemini-2.5-flash",
-        contents: `Dê um conselho de uma frase curta e profunda baseado na carta de tarot "${randomCard}". Seja místico e direto. Responda em Português.`,
+
+      const res = await fetch('/api/reading', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ prompt: `Dê um conselho de uma frase curta e profunda baseado na carta de tarot "${randomCard}". Seja místico e direto. Responda em Português.` }),
       });
-      
-      setQuickAdvice({ card: randomCard, advice: response.text || "A sincronicidade está em movimento." });
+      const data = await res.json();
+
+      setQuickAdvice({ card: randomCard, advice: data.text || "A sincronicidade está em movimento." });
     } catch (error) {
       console.error("Erro no conselho rápido:", error);
       setQuickAdvice({ card: "O Destino", advice: "Aguarde o momento certo para a revelação." });
@@ -738,14 +738,6 @@ Sincronicidade & Inteligência Artificial.
     const currentInput = input;
 
     try {
-      const apiKey = userApiKey;
-      if (!apiKey) {
-        setAppState('auth');
-        throw new Error("A conexão com o Oráculo não foi configurada (API Key ausente).");
-      }
-
-      const ai = new GoogleGenAI({ apiKey });
-
       const depthText = depth < 300 ? "direta e prática" : depth > 700 ? "profunda, espiritual e cármica" : "equilibrada";
       const modeInfo = READING_MODES.find(m => m.id === readingMode);
       const modeText = modeInfo?.title;
@@ -772,14 +764,17 @@ Instruções: ${modeInstructions}
 Profundidade: ${depthText}.
 Pergunta: ${currentInput}.`;
 
-      const response = await ai.models.generateContent({
-        model: MODEL_NAME,
-        contents: prompt,
+      const res = await fetch('/api/reading', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ prompt }),
       });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Erro no servidor');
 
       const assistantMessage: Message = {
         role: 'assistant',
-        content: response.text || "O silêncio do destino é uma resposta, mas aqui houve uma falha na conexão.",
+        content: data.text || "O silêncio do destino é uma resposta, mas aqui houve uma falha na conexão.",
         timestamp: new Date(),
       };
 
@@ -1081,46 +1076,18 @@ Pergunta: ${currentInput}.`;
               <div className="w-20 h-20 rounded-full bg-gold/10 flex items-center justify-center border border-gold/20 mx-auto animate-pulse">
                 <Eye className="w-10 h-10 text-gold" />
               </div>
-              <h1 className="serif text-4xl text-gold tracking-tighter uppercase">Portal de Sincronicidade</h1>
+              <h1 className="serif text-4xl text-gold tracking-tighter uppercase">Oráculo da Sincronicidade</h1>
               <p className="text-mystic-paper/60 text-sm max-w-md mx-auto leading-relaxed">
-                Para acessar a sabedoria ancestral do Oráculo, é necessário conectar sua chave de luz (Gemini API Key).
+                Inteligência Ancestral & Artificial. Consulte as forças do universo e receba orientações personalizadas.
               </p>
             </div>
 
-            <div className="glass-panel p-10 w-full space-y-8 border-gold/20">
-              <div className="space-y-4">
-                <div className="flex justify-between items-center">
-                  <label className="text-[10px] uppercase tracking-[0.2em] text-gold/60 font-medium">Sua Chave API</label>
-                  <a 
-                    href="https://aistudio.google.com/app/apikey" 
-                    target="_blank" 
-                    rel="noopener noreferrer"
-                    className="text-[10px] uppercase tracking-[0.2em] text-gold hover:underline flex items-center gap-1"
-                  >
-                    Obter Chave <ChevronRight className="w-3 h-3" />
-                  </a>
-                </div>
-                <input
-                  type="password"
-                  value={userApiKey}
-                  onChange={(e) => setUserApiKey(e.target.value)}
-                  placeholder="Cole sua chave aqui..."
-                  className="w-full bg-mystic-dark/50 border border-panel-border rounded-xl px-6 py-4 focus:outline-none focus:border-gold/50 transition-all text-center tracking-widest placeholder:tracking-normal placeholder:opacity-20"
-                />
-              </div>
-
-              <button
-                onClick={() => handleSaveApiKey(userApiKey)}
-                disabled={!userApiKey.trim()}
-                className="w-full py-5 rounded-xl bg-gold text-mystic-dark uppercase tracking-[0.3em] text-xs font-bold hover:scale-[1.02] active:scale-[0.98] transition-all disabled:opacity-20 disabled:grayscale shadow-[0_0_30px_rgba(197,160,89,0.2)]"
-              >
-                Desbloquear Oráculo
-              </button>
-            </div>
-
-            <p className="text-[10px] text-mystic-paper/30 uppercase tracking-[0.2em]">
-              Sua chave é armazenada localmente e nunca sai do seu navegador.
-            </p>
+            <button
+              onClick={() => setAppState('landing')}
+              className="px-16 py-5 rounded-xl bg-gold text-mystic-dark uppercase tracking-[0.3em] text-xs font-bold hover:scale-[1.02] active:scale-[0.98] transition-all shadow-[0_0_30px_rgba(197,160,89,0.2)]"
+            >
+              Acessar Portal Reset
+            </button>
           </motion.div>
         )}
 
