@@ -1,0 +1,22 @@
+{
+  "name": "oraculo-api",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Servico da borda do Oraculo da Sincronicidade. Guarda a chave do Gemini no servidor.",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node --watch server.js"
+  },
+  "dependencies": {
+    "@google/genai": "^1.29.0",
+    "cors": "^2.8.5",
+    "dotenv": "^17.2.3",
+    "express": "^4.21.2",
+    "express-rate-limit": "^7.4.1",
+    "zod": "^3.23.8"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

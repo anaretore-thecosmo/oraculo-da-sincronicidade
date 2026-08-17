@@ -6,3 +6,6 @@ coverage/
 *.log
 .env*
 !.env.example
+
+# dados de execucao do servico (creditos por IP)
+server/data/

@@ -4,16 +4,15 @@
  */
 
 import React, { useState, useRef, useEffect } from 'react';
-import { GoogleGenAI, ThinkingLevel, Modality } from "@google/genai";
 import { motion, AnimatePresence } from "motion/react";
 import { Sparkles, Send, Moon, Sun, Compass, Eye, Zap, Volume2, Loader2, Image as ImageIcon, RotateCcw, LayoutGrid, Plus, Grid3X3, Mic, MicOff, Wand2, Feather, ChevronRight, LogOut, Info, X } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 
 // --- Constants & Types ---
 
-const MODEL_NAME = "gemini-3.1-pro-preview";
-const TTS_MODEL = "gemini-2.5-flash-preview-tts";
-const IMAGE_MODEL = "gemini-2.5-flash-image";
+// Os modelos são escolhidos no servidor, via GEMINI_MODEL, GEMINI_TTS_MODEL
+// e GEMINI_IMAGE_MODEL no .env do oraculo-api. Trocar de modelo passou a ser
+// mudança de configuração, não de código, e não exige rebuild do front.
 
 const MAJOR_ARCANA = [
   "O Louco", "O Mago", "A Sacerdotisa", "A Imperatriz", "O Imperador", "O Hierofante",
@@ -37,7 +36,7 @@ const GYPSY_TAROT = [
   "A Mulher", "Os Lírios", "O Sol", "A Lua", "A Chave", "O Peixe", "A Âncora", "A Cruz"
 ];
 
-type AppState = 'auth' | 'landing' | 'input' | 'selecting' | 'loading' | 'reading' | 'voice';
+type AppState = 'landing' | 'input' | 'selecting' | 'loading' | 'reading';
 type SelectionPhase = 'major' | 'minor' | 'gypsy';
 type ReadingMode = '3-cards' | 'celtic-cross' | 'square-of-9';
 
@@ -75,304 +74,16 @@ const READING_MODES = [
   }
 ];
 
-const SYSTEM_INSTRUCTION = `
-Você é a Sacerdotisa Visionária do Oráculo da Sincronicidade.
-Seu tom é de uma mentora ancestral, firme, segura e profundamente mística, porém NADA supersticiosa.
 
-Você não fala de "sorte", "azar" ou "mandingas". 
-Você fala de MECÂNICA ENERGÉTICA, ALINHAMENTO VIBRACIONAL e POSICIONAMENTO ESTRATÉGICO.
-
-Seu papel é traduzir a sincronicidade das cartas em um diagnóstico de destino claro e acionável.
-
-Você realiza leituras integrando três níveis de realidade:
-1. ARCANOS MAIORES: O nível Arquetípico e Espiritual (O "Porquê" maior).
-2. ARCANOS MENORES: O nível Psicológico e Cotidiano (O "Como" se manifesta).
-3. BARALHO CIGANO: O nível Concreto e Prático (O "O quê" acontece na matéria).
-
-DIRETRIZES DE PERSONA:
-- Use uma linguagem magnética e autoritária.
-- Não peça validação ("você entende?", "faz sentido?").
-- Não use emojis.
-- Não use tabelas.
-- Mantenha o foco na fitoenergética técnica (ervas) para ajustes de frequência.
-- Trate o consulente como alguém que está assumindo o comando da própria vida.
-
-ESTRUTURA DO DIAGNÓSTICO FINAL:
-Ao receber as tríades, você deve entregar:
-1. # DIAGNÓSTICO DA SINCRONICIDADE (Título H1)
-2. ## O MOVIMENTO DO CAMPO (Visão geral da energia atual)
-3. ## ANÁLISE DAS TRÍADES (Por posição: Passado/Presente/Futuro ou conforme o modo)
-   - Explique como o Arcano Maior, Menor e Cigano se fundem naquela posição específica.
-4. ## A SOMBRA E O PONTO DE INFLEXÃO (Onde a energia estagna e como destravar)
-5. ## AJUSTE VIBRACIONAL (Recomendação de Fitoenergética - Banhos/Defumação com explicação técnica)
-6. ## SENTENÇA VISIONÁRIA (Encerramento padrão)
-`;
-
-// --- Voice Session Component ---
-
-function VoiceSession({ userApiKey, onBack }: { userApiKey: string, onBack: () => void }) {
-  const [isActive, setIsActive] = useState(false);
-  const [isConnecting, setIsConnecting] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [volume, setVolume] = useState(0);
-  const sessionRef = useRef<any>(null);
-  const audioContextRef = useRef<AudioContext | null>(null);
-  const workletNodeRef = useRef<AudioWorkletNode | null>(null);
-  const playbackContextRef = useRef<AudioContext | null>(null);
-  const nextStartTimeRef = useRef<number>(0);
-
-  const startSession = async () => {
-    setIsConnecting(true);
-    setError(null);
-    try {
-      const apiKey = userApiKey;
-      if (!apiKey) {
-        setError("API Key não configurada.");
-        setIsConnecting(false);
-        return;
-      }
-
-      const ai = new GoogleGenAI({ apiKey });
-      
-      const session = await ai.live.connect({
-        model: "gemini-2.5-flash-native-audio-preview-09-2025",
-        config: {
-          responseModalities: [Modality.AUDIO],
-          speechConfig: {
-            voiceConfig: { prebuiltVoiceConfig: { voiceName: "Zephyr" } },
-          },
-          systemInstruction: SYSTEM_INSTRUCTION + "\n\nVocê está em uma sessão de voz em tempo real. O consulente está usando seu próprio tarot físico ou oráculo pessoal. NÃO peça para o consulente tirar cartas digitais no app. Peça para ele descrever as cartas que tirou fisicamente e interprete-as com base na sabedoria da sincronicidade. Seja concisa, direta e mantenha o tom visionário. Não use listas longas.",
-          inputAudioTranscription: {},
-          outputAudioTranscription: {},
-        },
-        callbacks: {
-          onopen: () => {
-            setIsActive(true);
-            setIsConnecting(false);
-            startAudioCapture();
-          },
-          onmessage: async (message: any) => {
-            if (message.serverContent?.modelTurn?.parts?.[0]?.inlineData?.data) {
-              const base64Audio = message.serverContent.modelTurn.parts[0].inlineData.data;
-              playAudioChunk(base64Audio);
-            }
-            if (message.serverContent?.interrupted) {
-              stopAudioPlayback();
-            }
-          },
-          onclose: () => {
-            stopSession();
-          },
-          onerror: (err) => {
-            console.error("Live API Error:", err);
-            setError("Erro na conexão com o Oráculo.");
-            stopSession();
-          },
-        }
-      });
-      sessionRef.current = session;
-    } catch (error) {
-      console.error("Failed to connect to Live API:", error);
-      setError("Falha ao conectar ao Oráculo.");
-      setIsConnecting(false);
-    }
-  };
-
-  const stopSession = () => {
-    if (sessionRef.current) {
-      sessionRef.current.close();
-      sessionRef.current = null;
-    }
-    stopAudioCapture();
-    stopAudioPlayback();
-    setIsActive(false);
-    setIsConnecting(false);
-    setVolume(0);
-  };
-
-  const startAudioCapture = async () => {
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      const context = new (window.AudioContext || (window as any).webkitAudioContext)({ sampleRate: 16000 });
-      audioContextRef.current = context;
-      
-      if (context.state === 'suspended') {
-        await context.resume();
-      }
-      
-      await context.audioWorklet.addModule(
-        URL.createObjectURL(new Blob([`
-          class AudioProcessor extends AudioWorkletProcessor {
-            process(inputs, outputs, parameters) {
-              const input = inputs[0][0];
-              if (input) {
-                this.port.postMessage(input);
-              }
-              return true;
-            }
-          }
-          registerProcessor('audio-processor', AudioProcessor);
-        `], { type: 'application/javascript' }))
-      );
-
-      const source = context.createMediaStreamSource(stream);
-      const workletNode = new AudioWorkletNode(context, 'audio-processor');
-      
-      workletNode.port.onmessage = (event) => {
-        const pcmData = event.data;
-        
-        // Calculate volume for visual feedback
-        let sum = 0;
-        for (let i = 0; i < pcmData.length; i++) {
-          sum += pcmData[i] * pcmData[i];
-        }
-        const rms = Math.sqrt(sum / pcmData.length);
-        setVolume(rms);
-
-        const int16Buffer = new Int16Array(pcmData.length);
-        for (let i = 0; i < pcmData.length; i++) {
-          int16Buffer[i] = Math.max(-1, Math.min(1, pcmData[i])) * 0x7FFF;
-        }
-        const base64Data = btoa(String.fromCharCode(...new Uint8Array(int16Buffer.buffer)));
-        
-        if (sessionRef.current) {
-          sessionRef.current.sendRealtimeInput({
-            media: { data: base64Data, mimeType: 'audio/pcm;rate=16000' }
-          });
-        }
-      };
-
-      source.connect(workletNode);
-      // Some browsers require connecting to destination for the worklet to run
-      workletNode.connect(context.destination);
-      workletNodeRef.current = workletNode;
-    } catch (error) {
-      console.error("Error capturing audio:", error);
-      setError("Não foi possível acessar o microfone. Verifique as permissões.");
-      stopSession();
-    }
-  };
-
-  const stopAudioCapture = () => {
-    if (workletNodeRef.current) {
-      workletNodeRef.current.disconnect();
-      workletNodeRef.current = null;
-    }
-    if (audioContextRef.current) {
-      audioContextRef.current.close();
-      audioContextRef.current = null;
-    }
-  };
-
-  const playAudioChunk = async (base64Data: string) => {
-    if (!playbackContextRef.current) {
-      playbackContextRef.current = new (window.AudioContext || (window as any).webkitAudioContext)({ sampleRate: 24000 });
-      nextStartTimeRef.current = playbackContextRef.current.currentTime;
-    }
-
-    const context = playbackContextRef.current;
-    if (context.state === 'suspended') {
-      await context.resume();
-    }
-
-    const arrayBuffer = Uint8Array.from(atob(base64Data), c => c.charCodeAt(0)).buffer;
-    const float32Array = new Float32Array(arrayBuffer.byteLength / 2);
-    const dataView = new DataView(arrayBuffer);
-    for (let i = 0; i < float32Array.length; i++) {
-      float32Array[i] = dataView.getInt16(i * 2, true) / 32768;
-    }
-
-    const audioBuffer = context.createBuffer(1, float32Array.length, 24000);
-    audioBuffer.getChannelData(0).set(float32Array);
-
-    const source = context.createBufferSource();
-    source.buffer = audioBuffer;
-    source.connect(context.destination);
-
-    const startTime = Math.max(context.currentTime, nextStartTimeRef.current);
-    source.start(startTime);
-    nextStartTimeRef.current = startTime + audioBuffer.duration;
-  };
-
-  const stopAudioPlayback = () => {
-    if (playbackContextRef.current) {
-      playbackContextRef.current.close();
-      playbackContextRef.current = null;
-      nextStartTimeRef.current = 0;
-    }
-  };
-
-  return (
-    <motion.div 
-      initial={{ opacity: 0, scale: 0.95 }}
-      animate={{ opacity: 1, scale: 1 }}
-      className="max-w-2xl mx-auto w-full py-12"
-    >
-      <div className="glass-panel p-12 flex flex-col items-center space-y-12 relative overflow-hidden">
-        <div className="absolute top-0 left-0 w-full h-1 bg-gold/20" />
-        
-        <div className="text-center space-y-4">
-          <h2 className="serif text-3xl text-gold uppercase tracking-widest">Sessão por Voz</h2>
-          <p className="text-mystic-paper/40 text-sm italic">Use seu tarot físico e revele as cartas que o Oráculo irá interpretar.</p>
-          <p className="text-mystic-paper/20 text-[10px] uppercase tracking-tighter">A conexão é direta com o campo da sincronicidade.</p>
-        </div>
-
-        {error && (
-          <div className="p-4 bg-red-500/10 border border-red-500/20 rounded-xl text-red-500 text-xs uppercase tracking-widest text-center w-full">
-            {error}
-          </div>
-        )}
-
-        <div className="relative flex items-center justify-center">
-          <motion.div 
-            animate={isActive ? {
-              scale: [1, 1 + volume * 2, 1],
-              opacity: [0.3, 0.3 + volume * 0.7, 0.3],
-            } : {}}
-            transition={{ duration: 0.1 }}
-            className="absolute w-48 h-48 rounded-full bg-gold/10 border border-gold/20"
-          />
-          <div className={`w-32 h-32 rounded-full flex items-center justify-center transition-all duration-500 ${isActive ? 'bg-gold shadow-[0_0_50px_rgba(197,160,89,0.5)]' : 'bg-panel-bg border border-panel-border'}`}>
-            <Mic className={`w-12 h-12 ${isActive ? 'text-mystic-dark' : 'text-gold/40'}`} />
-          </div>
-        </div>
-
-        <div className="flex flex-col items-center gap-6 w-full">
-          {!isActive ? (
-            <button
-              onClick={startSession}
-              disabled={isConnecting}
-              className="w-full py-4 rounded-2xl bg-gold/10 border border-gold/20 text-gold uppercase tracking-widest text-sm font-bold hover:bg-gold hover:text-mystic-dark transition-all disabled:opacity-50"
-            >
-              {isConnecting ? "Conectando..." : "Iniciar Conexão"}
-            </button>
-          ) : (
-            <button
-              onClick={stopSession}
-              className="w-full py-4 rounded-2xl bg-red-500/10 border border-red-500/20 text-red-500 uppercase tracking-widest text-sm font-bold hover:bg-red-500 hover:text-white transition-all"
-            >
-              Encerrar Sessão
-            </button>
-          )}
-          
-          <button
-            onClick={onBack}
-            className="text-mystic-paper/40 uppercase tracking-widest text-[10px] hover:text-mystic-paper transition-all"
-          >
-            Voltar ao Início
-          </button>
-        </div>
-      </div>
-    </motion.div>
-  );
-}
 
 // --- Components ---
 
 export default function App() {
   const [isDarkMode, setIsDarkMode] = useState(true);
-  const [userApiKey, setUserApiKey] = useState<string>(() => localStorage.getItem('oracle_api_key') || '');
-  const [appState, setAppState] = useState<AppState>(() => localStorage.getItem('oracle_api_key') ? 'landing' : 'auth');
+  // A chave do Gemini vive no servidor (/var/www/oraculo-api/.env).
+  // O navegador não guarda, não pede e não vê chave nenhuma.
+  // Todo mundo entra direto. Não há mais porteiro pedindo chave.
+  const [appState, setAppState] = useState<AppState>('landing');
   const [selectionPhase, setSelectionPhase] = useState<SelectionPhase>('major');
   const [readingMode, setReadingMode] = useState<ReadingMode>('3-cards');
   const [depth, setDepth] = useState(500);
@@ -393,18 +104,13 @@ export default function App() {
   const [quickAdvice, setQuickAdvice] = useState<{ card: string, advice: string } | null>(null);
   const [isGeneratingQuickAdvice, setIsGeneratingQuickAdvice] = useState(false);
   const [isRecording, setIsRecording] = useState(false);
+  // Quantas leituras por conta da casa ainda restam. Quem manda é o
+  // servidor: o navegador só exibe o que ele responder.
+  const [creditos, setCreditos] = useState<{ restantes: number, total: number, linkCompra: string | null } | null>(null);
+  const [esgotado, setEsgotado] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const recognitionRef = useRef<any>(null);
-
-  const handleSaveApiKey = (key: string) => {
-    const trimmedKey = key.trim();
-    if (trimmedKey) {
-      localStorage.setItem('oracle_api_key', trimmedKey);
-      setUserApiKey(trimmedKey);
-      setAppState('landing');
-    }
-  };
 
   const toggleTheme = () => setIsDarkMode(!isDarkMode);
 
@@ -454,23 +160,34 @@ export default function App() {
     };
   }, []);
 
+  useEffect(() => {
+    fetch('/api/oraculo/creditos')
+      .then(r => r.json())
+      .then(d => {
+        setCreditos(d);
+        if (d.restantes === 0) setEsgotado(true);
+      })
+      .catch(() => { /* silêncio: sem contador é melhor que erro na cara */ });
+  }, []);
+
   const handleQuickAdvice = async () => {
-    if (!userApiKey) return;
     setIsGeneratingQuickAdvice(true);
     setShowQuickAdvice(true);
     setQuickAdvice(null);
-    
+
+    const allCards = [...MAJOR_ARCANA, ...MINOR_ARCANA, ...GYPSY_TAROT];
+    const randomCard = allCards[Math.floor(Math.random() * allCards.length)];
+
     try {
-      const allCards = [...MAJOR_ARCANA, ...MINOR_ARCANA, ...GYPSY_TAROT];
-      const randomCard = allCards[Math.floor(Math.random() * allCards.length)];
-      
-      const ai = new GoogleGenAI({ apiKey: userApiKey });
-      const response = await ai.models.generateContent({
-        model: "gemini-3-flash-preview",
-        contents: `Dê um conselho de uma frase curta e profunda baseado na carta de tarot "${randomCard}". Seja místico e direto. Responda em Português.`,
+      const resposta = await fetch('/api/oraculo/conselho', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ carta: randomCard }),
       });
-      
-      setQuickAdvice({ card: randomCard, advice: response.text || "A sincronicidade está em movimento." });
+      const dados = await resposta.json();
+      if (!resposta.ok) throw new Error(dados.erro);
+
+      setQuickAdvice({ card: randomCard, advice: dados.conselho });
     } catch (error) {
       console.error("Erro no conselho rápido:", error);
       setQuickAdvice({ card: "O Destino", advice: "Aguarde o momento certo para a revelação." });
@@ -738,68 +455,52 @@ Sincronicidade & Inteligência Artificial.
     const currentInput = input;
 
     try {
-      const apiKey = userApiKey;
-      if (!apiKey) {
-        setAppState('auth');
-        throw new Error("A conexão com o Oráculo não foi configurada (API Key ausente).");
-      }
-
-      const ai = new GoogleGenAI({ apiKey });
-      const chat = ai.chats.create({
-        model: MODEL_NAME,
-        config: {
-          systemInstruction: SYSTEM_INSTRUCTION,
-          thinkingConfig: { thinkingLevel: ThinkingLevel.HIGH }
-        }
+      // A chave do Gemini vive no servidor, em /var/www/oraculo-api/.env.
+      // O navegador não conhece chave nenhuma e não precisa conhecer.
+      const resposta = await fetch('/api/oraculo/leitura', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          pergunta: currentInput,
+          modo: readingMode,
+          profundidade: depth,
+          arcanosMaiores: major,
+          arcanosMenores: minor,
+          baralhoCigano: gypsy,
+        }),
       });
 
-      const depthText = depth < 300 ? "direta e prática" : depth > 700 ? "profunda, espiritual e cármica" : "equilibrada";
-      const modeInfo = READING_MODES.find(m => m.id === readingMode);
-      const modeText = modeInfo?.title;
+      const dados = await resposta.json();
 
-      let modeInstructions = "";
-      if (readingMode === '3-cards') {
-        modeInstructions = "Analise como: Posição 1 (Passado/Raiz), Posição 2 (Presente/Ação), Posição 3 (Futuro/Tendência). Cada posição tem uma tríade: Arcano Maior + Arcano Menor + Baralho Cigano.";
-      } else if (readingMode === 'celtic-cross') {
-        modeInstructions = "Analise as 6 posições da Cruz Cigana. Cada uma das 6 posições é composta por uma tríade: Arcano Maior + Arcano Menor + Baralho Cigano.";
-      } else if (readingMode === 'square-of-9') {
-        modeInstructions = "Analise como um Quadrado de 9 (3x3). Cada uma das 9 casas é composta por uma tríade: Arcano Maior + Arcano Menor + Baralho Cigano.";
+      if (resposta.status === 402) {
+        // Leituras gratuitas acabaram. Não é erro: é o fim do que era grátis.
+        setCreditos({ restantes: 0, total: dados.gratisTotal, linkCompra: dados.linkCompra });
+        setEsgotado(true);
+        setAppState('input');
+        setIsLoading(false);
+        return;
       }
 
-      const response = await chat.sendMessage({ 
-        message: `Sou a Sacerdotisa Visionária. Realize o Diagnóstico da Sincronicidade.
-        Tríades por posição:
-        Arcanos Maiores: ${major.join(', ')}
-        Arcanos Menores: ${minor.join(', ')}
-        Baralho Cigano: ${gypsy.join(', ')}
-        
-        Modo: ${modeText}. 
-        Instruções: ${modeInstructions}
-        Profundidade: ${depthText}.
-        Pergunta: ${currentInput}.` 
-      });
-      
+      if (!resposta.ok) {
+        throw new Error(dados.erro || "Não foi possível completar a leitura agora.");
+      }
+
+      if (typeof dados.creditosRestantes === 'number') {
+        setCreditos(c => c ? { ...c, restantes: dados.creditosRestantes } : c);
+      }
+
       const assistantMessage: Message = {
         role: 'assistant',
-        content: response.text || "O silêncio do destino é uma resposta, mas aqui houve uma falha na conexão.",
+        content: dados.leitura,
         timestamp: new Date(),
       };
 
       setMessages(prev => [...prev, assistantMessage]);
       setAppState('reading');
     } catch (err: any) {
-      console.error("ERRO CRÍTICO NA LEITURA DO ORÁCULO:", err);
-      let errorMessage = "Ocorreu um erro ao consultar o Oráculo. Tente novamente.";
-      
-      if (err.message?.includes("API_KEY")) {
-        errorMessage = "A chave de API não foi encontrada ou é inválida. Verifique as configurações.";
-      } else if (err.message?.includes("model")) {
-        errorMessage = "O modelo espiritual está temporariamente indisponível. Tente em alguns instantes.";
-      } else if (err.message?.includes("fetch")) {
-        errorMessage = "Falha na conexão com o plano astral (erro de rede). Verifique sua internet.";
-      }
-      
-      setError(errorMessage);
+      console.error("ERRO NA LEITURA DO ORÁCULO:", err);
+      // O serviço já devolve o motivo em texto de gente. Mostra o que ele disse.
+      setError(err.message || "Ocorreu um erro ao consultar o Oráculo. Tente novamente.");
       setAppState('input');
     } finally {
       setIsLoading(false);
@@ -830,55 +531,16 @@ Sincronicidade & Inteligência Artificial.
     setIsNarrating(index);
 
     try {
-      const apiKey = userApiKey;
-      if (!apiKey) {
-        setAppState('auth');
-        return;
-      }
-      const ai = new GoogleGenAI({ apiKey });
-      
-      const narratePrompt = `
-        Você é uma Mentora Espiritual firme, segura e visionária.
-
-        Converta a leitura abaixo em uma versão narrada para áudio.
-
-        Diretrizes obrigatórias:
-        - Linguagem natural, fluida e magnética.
-        - Frases levemente mais curtas do que no texto escrito.
-        - Pequenas pausas implícitas.
-        - Tom seguro, calmo e confiante.
-        - Não use emojis.
-        - Não use listas.
-        - Não mencione seções como "Forças em Ação".
-        - Transforme tudo em narrativa contínua.
-
-        A voz deve transmitir:
-        - Autoridade espiritual
-        - Clareza estratégica
-        - Serenidade
-        - Segurança
-
-        No encerramento, use esta variação:
-        "O que se revelou aqui é maior do que coincidência. É sincronicidade. Mas sincronicidade só prospera quando há coragem. Faça a sua parte com clareza e decisão, e o Universo sustenta o movimento. Você já viu o que precisava ver. Agora avance. Que assim seja."
-
-        Texto base da leitura:
-        ${content}
-      `;
-
-      const response = await ai.models.generateContent({
-        model: TTS_MODEL,
-        contents: [{ parts: [{ text: narratePrompt }] }],
-        config: {
-          responseModalities: [Modality.AUDIO],
-          speechConfig: {
-            voiceConfig: {
-              prebuiltVoiceConfig: { voiceName: 'Kore' },
-            },
-          },
-        },
+      // O prompt da narração mora no servidor, junto da chave.
+      const resposta = await fetch('/api/oraculo/narracao', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ texto: content }),
       });
+      const dados = await resposta.json();
+      if (!resposta.ok) throw new Error(dados.erro || 'A narração não pôde ser gerada agora.');
 
-      const base64Audio = response.candidates?.[0]?.content?.parts?.[0]?.inlineData?.data;
+      const base64Audio = dados.audio;
       if (base64Audio) {
         const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)({ sampleRate: 24000 });
         const arrayBuffer = Uint8Array.from(atob(base64Audio), c => c.charCodeAt(0)).buffer;
@@ -917,68 +579,16 @@ Sincronicidade & Inteligência Artificial.
     setIsGeneratingImage(index);
 
     try {
-      const apiKey = userApiKey;
-      if (!apiKey) {
-        setAppState('auth');
-        return;
-      }
-      const ai = new GoogleGenAI({ apiKey });
-      
-      // First, extract energy themes, colors and symbols
-      const summaryResponse = await ai.models.generateContent({
-        model: "gemini-3-flash-preview",
-        contents: `Analise esta leitura de tarot e identifique as 3 cores vibrantes predominantes e os 2 símbolos arquetípicos centrais que representam essa energia. Responda apenas com as cores e símbolos: ${content}`,
+      // Prompt e chave moram no servidor. O front só pede a imagem.
+      const resposta = await fetch('/api/oraculo/imagem', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ texto: content }),
       });
-      
-      const visualThemes = summaryResponse.text || "Ouro, Índigo, Violeta. Luz e Estrela.";
+      const dados = await resposta.json();
+      if (!resposta.ok) throw new Error(dados.erro || 'A imagem não pôde ser gerada agora.');
 
-      const imagePrompt = `
-        Create a cinematic symbolic spiritual image representing the vibrational frequency revealed in this tarot reading.
-
-        Visual Themes & Palette:
-        ${visualThemes}
-
-        Visual direction:
-        - Contemporary mystical aesthetic
-        - Poetic realism
-        - VIBRANT AND SATURATED COLORS reflecting the identified palette
-        - Atmospheric depth and cinematic lighting
-        - Cinematic composition
-        - Powerful spiritual symbolism
-        - No text, no watermark
-        - Vertical format (9:16)
-        - High detail, premium modern spiritual artwork
-
-        The image must feel:
-        - Visionary and Sacred
-        - Empowering and Vibrant
-        - Like destiny materializing in full color
-
-        Avoid:
-        - Traditional tarot card borders
-        - Text overlays
-        - Low saturation or dull colors
-      `;
-
-      const response = await ai.models.generateContent({
-        model: IMAGE_MODEL,
-        contents: {
-          parts: [{ text: imagePrompt }],
-        },
-        config: {
-          imageConfig: {
-            aspectRatio: "9:16",
-          },
-        },
-      });
-
-      let imageUrl = "";
-      for (const part of response.candidates?.[0]?.content?.parts || []) {
-        if (part.inlineData) {
-          imageUrl = `data:image/png;base64,${part.inlineData.data}`;
-          break;
-        }
-      }
+      const imageUrl = dados.imagem ? `data:image/png;base64,${dados.imagem}` : "";
 
       if (imageUrl) {
         setMessages(prev => prev.map((msg, i) => i === index ? { ...msg, generatedImage: imageUrl } : msg));
@@ -1010,7 +620,7 @@ Sincronicidade & Inteligência Artificial.
           </div>
         </div>
         <div className="flex items-center gap-4">
-          {appState !== 'landing' && appState !== 'auth' && (
+          {appState !== 'landing' && (
             <button
               onClick={handleNewReading}
               className={`flex items-center gap-2 px-4 py-2 rounded-full border transition-all ${isDarkMode ? 'bg-gold/10 border-gold/20 text-gold hover:bg-gold hover:text-mystic-dark' : 'bg-gold/20 border-gold/30 text-gold hover:bg-gold hover:text-white'}`}
@@ -1020,7 +630,7 @@ Sincronicidade & Inteligência Artificial.
             </button>
           )}
           <div className="flex items-center gap-4">
-            {userApiKey && (
+            {(
               <div className="flex items-center gap-2 border-r border-gold/10 pr-4 mr-2 hidden md:flex">
                 <button 
                   onClick={handleQuickAdvice}
@@ -1055,78 +665,12 @@ Sincronicidade & Inteligência Artificial.
             >
               {isDarkMode ? <Moon className="w-5 h-5" /> : <Sun className="w-5 h-5" />}
             </button>
-            {userApiKey && (
-              <button
-                onClick={() => {
-                  localStorage.removeItem('oracle_api_key');
-                  setUserApiKey('');
-                  setAppState('auth');
-                }}
-                className="p-2 rounded-full text-red-500/40 hover:text-red-500 hover:bg-red-500/10 transition-all"
-                title="Sair / Limpar Chave"
-              >
-                <LogOut className="w-5 h-5" />
-              </button>
-            )}
           </div>
         </div>
       </header>
 
       {/* Main Content Area */}
       <main className="flex-1 overflow-y-auto px-4 md:px-8 py-6 space-y-8 max-w-6xl mx-auto w-full">
-        {appState === 'auth' && (
-          <motion.div
-            initial={{ opacity: 0, scale: 0.95 }}
-            animate={{ opacity: 1, scale: 1 }}
-            className="flex flex-col items-center justify-center min-h-[70vh] text-center space-y-12 max-w-2xl mx-auto"
-          >
-            <div className="space-y-6">
-              <div className="w-20 h-20 rounded-full bg-gold/10 flex items-center justify-center border border-gold/20 mx-auto animate-pulse">
-                <Eye className="w-10 h-10 text-gold" />
-              </div>
-              <h1 className="serif text-4xl text-gold tracking-tighter uppercase">Portal de Sincronicidade</h1>
-              <p className="text-mystic-paper/60 text-sm max-w-md mx-auto leading-relaxed">
-                Para acessar a sabedoria ancestral do Oráculo, é necessário conectar sua chave de luz (Gemini API Key).
-              </p>
-            </div>
-
-            <div className="glass-panel p-10 w-full space-y-8 border-gold/20">
-              <div className="space-y-4">
-                <div className="flex justify-between items-center">
-                  <label className="text-[10px] uppercase tracking-[0.2em] text-gold/60 font-medium">Sua Chave API</label>
-                  <a 
-                    href="https://aistudio.google.com/app/apikey" 
-                    target="_blank" 
-                    rel="noopener noreferrer"
-                    className="text-[10px] uppercase tracking-[0.2em] text-gold hover:underline flex items-center gap-1"
-                  >
-                    Obter Chave <ChevronRight className="w-3 h-3" />
-                  </a>
-                </div>
-                <input
-                  type="password"
-                  value={userApiKey}
-                  onChange={(e) => setUserApiKey(e.target.value)}
-                  placeholder="Cole sua chave aqui..."
-                  className="w-full bg-mystic-dark/50 border border-panel-border rounded-xl px-6 py-4 focus:outline-none focus:border-gold/50 transition-all text-center tracking-widest placeholder:tracking-normal placeholder:opacity-20"
-                />
-              </div>
-
-              <button
-                onClick={() => handleSaveApiKey(userApiKey)}
-                disabled={!userApiKey.trim()}
-                className="w-full py-5 rounded-xl bg-gold text-mystic-dark uppercase tracking-[0.3em] text-xs font-bold hover:scale-[1.02] active:scale-[0.98] transition-all disabled:opacity-20 disabled:grayscale shadow-[0_0_30px_rgba(197,160,89,0.2)]"
-              >
-                Desbloquear Oráculo
-              </button>
-            </div>
-
-            <p className="text-[10px] text-mystic-paper/30 uppercase tracking-[0.2em]">
-              Sua chave é armazenada localmente e nunca sai do seu navegador.
-            </p>
-          </motion.div>
-        )}
-
         {appState === 'landing' && (
           <motion.div 
             initial={{ opacity: 0, y: 20 }}
@@ -1141,9 +685,37 @@ Sincronicidade & Inteligência Artificial.
               <p className="text-mystic-paper/40 max-w-2xl mx-auto text-sm">
                 A sabedoria das cartas encontra o campo inteligente que organiza os acontecimentos.
               </p>
+
+              {/* Leituras por conta da casa. Discreto: informa sem pressionar. */}
+              {creditos && !esgotado && (
+                <p className="text-[10px] uppercase tracking-[0.3em] text-gold/50 pt-2">
+                  {creditos.restantes === 1
+                    ? 'Última leitura por conta da casa'
+                    : `${creditos.restantes} leituras por conta da casa`}
+                </p>
+              )}
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 w-full max-w-5xl">
+            {esgotado && (
+              <div className="glass-panel p-10 w-full max-w-2xl space-y-6 border-gold/20">
+                <h3 className="serif text-2xl text-gold uppercase tracking-wider">O campo pede uma pausa</h3>
+                <p className="text-mystic-paper/60 text-sm leading-relaxed">
+                  Suas leituras por conta da casa se completaram. O que se revelou até aqui continua valendo, e o oráculo segue aberto para quem quiser atravessar.
+                </p>
+                {creditos?.linkCompra ? (
+                  <a
+                    href={creditos.linkCompra}
+                    className="inline-block px-10 py-4 rounded-xl bg-gold text-mystic-dark uppercase tracking-[0.3em] text-xs font-bold hover:scale-[1.02] transition-all"
+                  >
+                    Continuar a travessia
+                  </a>
+                ) : (
+                  <p className="text-[10px] uppercase tracking-[0.2em] text-gold/50">Em breve, a continuação</p>
+                )}
+              </div>
+            )}
+
+            <div className={`grid grid-cols-1 md:grid-cols-3 gap-6 w-full max-w-5xl ${esgotado ? 'opacity-30 pointer-events-none' : ''}`}>
               {READING_MODES.map((mode) => (
                 <motion.div
                   key={mode.id}
@@ -1163,27 +735,12 @@ Sincronicidade & Inteligência Artificial.
               ))}
             </div>
 
-            <div className="grid grid-cols-1 gap-6 w-full max-w-xl">
-              <motion.div 
-                whileHover={{ y: -5, scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
-                onClick={() => setAppState('voice')}
-                className="glass-panel p-6 flex items-center gap-6 border-white/5 hover:border-gold/30 cursor-pointer group transition-all"
-              >
-                <div className="w-12 h-12 rounded-full bg-gold/10 flex items-center justify-center border border-gold/20 group-hover:bg-gold/20 transition-all">
-                  <Mic className="w-5 h-5 text-gold" />
-                </div>
-                <div className="text-left">
-                  <h4 className="serif text-lg text-mystic-paper uppercase">Sessão por Voz</h4>
-                  <p className="text-xs text-mystic-paper/40 italic">Use seu tarot físico e revele as cartas que o Oráculo irá interpretar</p>
-                </div>
-              </motion.div>
-            </div>
+            {/* Sessão por Voz: escondida até a fase 2. Ela usa WebSocket direto
+                do navegador para o Google e precisa de token efêmero emitido
+                pelo servidor. Enquanto isso não existe, o card fica fora do ar
+                para não oferecer o que não funciona. O componente VoiceSession
+                segue no arquivo, intacto, esperando. */}
           </motion.div>
-        )}
-
-        {appState === 'voice' && (
-          <VoiceSession userApiKey={userApiKey} onBack={() => setAppState('landing')} />
         )}
 
         {appState === 'input' && (
