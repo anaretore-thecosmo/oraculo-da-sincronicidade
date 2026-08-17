@@ -23,7 +23,7 @@ const rateLimit = require('express-rate-limit');
 const { z } = require('zod');
 const { GoogleGenAI } = require('@google/genai');
 
-const { SYSTEM_INSTRUCTION } = require('./prompt');
+const { SYSTEM_INSTRUCTION, VOZ_INSTRUCAO_EXTRA } = require('./prompt');
 
 // ---------------------------------------------------------------------
 // 1. Validação de ambiente — fail fast
@@ -36,6 +36,7 @@ const envSchema = z.object({
   GEMINI_MODEL: z.string().default('gemini-3.5-flash'),
   GEMINI_TTS_MODEL: z.string().default('gemini-2.5-flash-preview-tts'),
   GEMINI_IMAGE_MODEL: z.string().default('gemini-2.5-flash-image'),
+  GEMINI_VOZ_MODEL: z.string().default('gemini-2.5-flash-native-audio-latest'),
   ALLOWED_ORIGIN: z.string().url().default('https://oraculo.portalthecosmo.com'),
   LEITURAS_POR_MINUTO: z.coerce.number().int().positive().default(10),
   LEITURAS_GRATIS: z.coerce.number().int().min(0).default(5),
@@ -459,7 +460,54 @@ app.post('/api/oraculo/conselho', limiteLeitura, async (req, res) => {
 });
 
 // ---------------------------------------------------------------------
-// 12. Sobe
+// 12. Token efêmero para a sessão de voz
+//
+//     A sessão de voz abre WebSocket direto do navegador para o Google.
+//     Não passa por proxy: o áudio é bidirecional e em tempo real, e um
+//     intermediário aqui só adicionaria atraso e ponto de falha.
+//
+//     Mas o navegador precisa de ALGUMA credencial para abrir esse canal.
+//     A chave da casa não pode ir: ela é permanente e vale para tudo.
+//     O token efêmero resolve: nasce aqui no servidor, vale para UMA
+//     sessão, expira em minutos e só serve para o modelo de voz.
+//
+//     É a diferença entre emprestar a chave da casa e abrir a porta.
+// ---------------------------------------------------------------------
+app.post('/api/oraculo/token-voz', limiteLeitura, exigirCredito, async (req, res) => {
+  try {
+    const agora = Date.now();
+    const token = await ai.authTokens.create({
+      config: {
+        uses: 1,                                                   // um único uso
+        expireTime: new Date(agora + 30 * 60 * 1000).toISOString(), // sessão morre em 30min
+        newSessionExpireTime: new Date(agora + 60 * 1000).toISOString(), // 1min para começar
+        liveConnectConstraints: {
+          model: env.GEMINI_VOZ_MODEL,
+          config: {
+            responseModalities: ['AUDIO'],
+            systemInstruction: SYSTEM_INSTRUCTION + VOZ_INSTRUCAO_EXTRA,
+          },
+        },
+        httpOptions: { apiVersion: 'v1alpha' },
+      },
+    });
+
+    consumirCredito(req);
+    log('info', 'token_voz_emitido', { restantes: restantes(req) });
+
+    return res.json({
+      token: token.name,
+      modelo: env.GEMINI_VOZ_MODEL,
+      creditosRestantes: restantes(req),
+    });
+  } catch (err) {
+    log('erro', 'token_voz_falhou', { msg: err.message, status: err.status ?? null });
+    return res.status(502).json({ erro: 'A sessão de voz não pôde ser aberta agora.' });
+  }
+});
+
+// ---------------------------------------------------------------------
+// 13. Sobe
 // ---------------------------------------------------------------------
 app.listen(env.PORT, '127.0.0.1', () => {
   log('info', 'servico_no_ar', { porta: env.PORT, modelo: env.GEMINI_MODEL });

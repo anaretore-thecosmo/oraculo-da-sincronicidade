@@ -3,10 +3,13 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, lazy, Suspense } from 'react';
 import { motion, AnimatePresence } from "motion/react";
 import { Sparkles, Send, Moon, Sun, Compass, Eye, Zap, Volume2, Loader2, Image as ImageIcon, RotateCcw, LayoutGrid, Plus, Grid3X3, Mic, MicOff, Wand2, Feather, ChevronRight, LogOut, Info, X } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
+// Carregado sob demanda: o VoiceSession arrasta o SDK do Gemini junto,
+// e quem só faz leitura não tem por que baixar 277KB que nunca vai usar.
+const VoiceSession = lazy(() => import('./VoiceSession'));
 
 // --- Constants & Types ---
 
@@ -36,7 +39,7 @@ const GYPSY_TAROT = [
   "A Mulher", "Os Lírios", "O Sol", "A Lua", "A Chave", "O Peixe", "A Âncora", "A Cruz"
 ];
 
-type AppState = 'landing' | 'input' | 'selecting' | 'loading' | 'reading';
+type AppState = 'landing' | 'input' | 'selecting' | 'loading' | 'reading' | 'voice';
 type SelectionPhase = 'major' | 'minor' | 'gypsy';
 type ReadingMode = '3-cards' | 'celtic-cross' | 'square-of-9';
 
@@ -735,12 +738,39 @@ Sincronicidade & Inteligência Artificial.
               ))}
             </div>
 
-            {/* Sessão por Voz: escondida até a fase 2. Ela usa WebSocket direto
-                do navegador para o Google e precisa de token efêmero emitido
-                pelo servidor. Enquanto isso não existe, o card fica fora do ar
-                para não oferecer o que não funciona. O componente VoiceSession
-                segue no arquivo, intacto, esperando. */}
+            {/* Sessão por Voz: reativada com token efêmero emitido pelo
+                servidor. Consome uma leitura, como qualquer consulta. */}
+            <div className={`grid grid-cols-1 gap-6 w-full max-w-xl ${esgotado ? 'opacity-30 pointer-events-none' : ''}`}>
+              <motion.div
+                whileHover={{ y: -5, scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+                onClick={() => !esgotado && setAppState('voice')}
+                className="glass-panel p-6 flex items-center gap-6 border-white/5 hover:border-gold/30 cursor-pointer group transition-all"
+              >
+                <div className="w-12 h-12 rounded-full bg-gold/10 flex items-center justify-center border border-gold/20 group-hover:bg-gold/20 transition-all">
+                  <Mic className="w-5 h-5 text-gold" />
+                </div>
+                <div className="text-left">
+                  <h4 className="serif text-lg text-mystic-paper uppercase">Sessão por Voz</h4>
+                  <p className="text-xs text-mystic-paper/40 italic">Use seu tarot físico e revele as cartas que o Oráculo irá interpretar</p>
+                </div>
+              </motion.div>
+            </div>
           </motion.div>
+        )}
+
+        {appState === 'voice' && (
+          <Suspense fallback={
+            <div className="flex flex-col items-center justify-center min-h-[60vh] gap-4">
+              <Loader2 className="w-8 h-8 text-gold animate-spin" />
+              <p className="text-[10px] uppercase tracking-[0.3em] text-gold/50">Abrindo o canal</p>
+            </div>
+          }>
+            <VoiceSession
+              onBack={() => setAppState('landing')}
+              onCreditos={(restantes) => setCreditos(c => c ? { ...c, restantes } : c)}
+            />
+          </Suspense>
         )}
 
         {appState === 'input' && (

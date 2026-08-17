@@ -1,67 +1,34 @@
 // =====================================================================
-// VoiceSession — DESATIVADO, aguardando a fase 2
+// VoiceSession — sessão de voz ao vivo com o Oráculo
 // =====================================================================
-// Este componente NÃO é importado pelo App.tsx e não entra no bundle.
-// Ele está preservado aqui, inteiro, porque a sessão de voz volta assim
-// que existir emissão de token efêmero pelo oraculo-api.
+// Reativado em 16/08/2026, agora com token efêmero.
 //
-// Por que ele não pode simplesmente voltar como está:
-//   ai.live.connect abre WebSocket direto do navegador para o Google e
-//   exige uma credencial no cliente. Reativar sem token efêmero seria
-//   voltar a pedir a chave do Gemini para quem consulta, que é
-//   exatamente o problema que esta refatoração eliminou.
+// Por que não dá para usar proxy aqui:
+//   ai.live.connect abre WebSocket bidirecional direto do navegador para
+//   o Google. Áudio em tempo real nos dois sentidos. Um intermediário só
+//   adicionaria atraso e mais um ponto de falha.
 //
-// Para reativar, na fase 2:
-//   1. criar POST /api/oraculo/token-voz no serviço, emitindo token
-//      efêmero via ai.authTokens.create
-//   2. trocar o parâmetro userApiKey por esse token de curta duração
-//   3. renomear este arquivo para VoiceSession.tsx e importar no App
-//   4. devolver o card "Sessão por Voz" na landing
+// Como fica seguro mesmo assim:
+//   O navegador nunca vê a chave da casa. Ele pede um TOKEN EFÊMERO ao
+//   servidor (/api/oraculo/token-voz), que vale para uma única sessão,
+//   expira em 30 minutos e só serve para o modelo de voz. O prompt da
+//   Sacerdotisa fica travado dentro do token, no servidor: não trafega
+//   pelo front e não é editável por quem estiver do outro lado.
 //
-// Desativado em 16/08/2026.
+//   É a diferença entre emprestar a chave da casa e abrir a porta.
 // =====================================================================
 
 import { useState, useRef, useEffect } from "react";
 import { motion } from "framer-motion";
-import { GoogleGenAI, Modality } from "@google/genai";
+import { GoogleGenAI } from "@google/genai";
 import { Mic, MicOff, ChevronLeft, Loader2 } from "lucide-react";
 
-const SYSTEM_INSTRUCTION = `
-Você é a Sacerdotisa Visionária do Oráculo da Sincronicidade.
-Seu tom é de uma mentora ancestral, firme, segura e profundamente mística, porém NADA supersticiosa.
-
-Você não fala de "sorte", "azar" ou "mandingas". 
-Você fala de MECÂNICA ENERGÉTICA, ALINHAMENTO VIBRACIONAL e POSICIONAMENTO ESTRATÉGICO.
-
-Seu papel é traduzir a sincronicidade das cartas em um diagnóstico de destino claro e acionável.
-
-Você realiza leituras integrando três níveis de realidade:
-1. ARCANOS MAIORES: O nível Arquetípico e Espiritual (O "Porquê" maior).
-2. ARCANOS MENORES: O nível Psicológico e Cotidiano (O "Como" se manifesta).
-3. BARALHO CIGANO: O nível Concreto e Prático (O "O quê" acontece na matéria).
-
-DIRETRIZES DE PERSONA:
-- Use uma linguagem magnética e autoritária.
-- Não peça validação ("você entende?", "faz sentido?").
-- Não use emojis.
-- Não use tabelas.
-- Mantenha o foco na fitoenergética técnica (ervas) para ajustes de frequência.
-- Trate o consulente como alguém que está assumindo o comando da própria vida.
-
-ESTRUTURA DO DIAGNÓSTICO FINAL:
-Ao receber as tríades, você deve entregar:
-1. # DIAGNÓSTICO DA SINCRONICIDADE (Título H1)
-2. ## O MOVIMENTO DO CAMPO (Visão geral da energia atual)
-3. ## ANÁLISE DAS TRÍADES (Por posição: Passado/Presente/Futuro ou conforme o modo)
-   - Explique como o Arcano Maior, Menor e Cigano se fundem naquela posição específica.
-4. ## A SOMBRA E O PONTO DE INFLEXÃO (Onde a energia estagna e como destravar)
-5. ## AJUSTE VIBRACIONAL (Recomendação de Fitoenergética - Banhos/Defumação com explicação técnica)
-6. ## SENTENÇA VISIONÁRIA (Encerramento padrão)
-`;
+// A instrução da Sacerdotisa não vive mais aqui: ela é injetada pelo
+// servidor dentro do token efêmero, e por isso não aparece no bundle.
 
 // --- Voice Session Component ---
 
-function VoiceSession({ userApiKey, onBack }: { userApiKey: string, onBack: () => void }) {
+function VoiceSession({ onBack, onCreditos }: { onBack: () => void, onCreditos?: (restantes: number) => void }) {
   const [isActive, setIsActive] = useState(false);
   const [isConnecting, setIsConnecting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -76,23 +43,33 @@ function VoiceSession({ userApiKey, onBack }: { userApiKey: string, onBack: () =
     setIsConnecting(true);
     setError(null);
     try {
-      const apiKey = userApiKey;
-      if (!apiKey) {
-        setError("API Key não configurada.");
+      // Pede a chave da porta ao servidor. Ela abre uma sessão só.
+      const r = await fetch('/api/oraculo/token-voz', { method: 'POST' });
+      const dados = await r.json();
+
+      if (r.status === 402) {
+        setError('Suas leituras gratuitas se completaram.');
         setIsConnecting(false);
         return;
       }
+      if (!r.ok || !dados.token) {
+        setError(dados.erro || 'A sessão de voz não pôde ser aberta agora.');
+        setIsConnecting(false);
+        return;
+      }
+      if (typeof dados.creditosRestantes === 'number') onCreditos?.(dados.creditosRestantes);
 
-      const ai = new GoogleGenAI({ apiKey });
-      
+      // O token entra no lugar da chave. v1alpha é exigido pela Live API.
+      const ai = new GoogleGenAI({
+        apiKey: dados.token,
+        httpOptions: { apiVersion: 'v1alpha' },
+      });
+
       const session = await ai.live.connect({
-        model: "gemini-2.5-flash-native-audio-preview-09-2025",
+        model: dados.modelo,
+        // Sem config aqui de propósito: modalidade, voz e instrução já vêm
+        // travadas dentro do token, definidas no servidor.
         config: {
-          responseModalities: [Modality.AUDIO],
-          speechConfig: {
-            voiceConfig: { prebuiltVoiceConfig: { voiceName: "Zephyr" } },
-          },
-          systemInstruction: SYSTEM_INSTRUCTION + "\n\nVocê está em uma sessão de voz em tempo real. O consulente está usando seu próprio tarot físico ou oráculo pessoal. NÃO peça para o consulente tirar cartas digitais no app. Peça para ele descrever as cartas que tirou fisicamente e interprete-as com base na sabedoria da sincronicidade. Seja concisa, direta e mantenha o tom visionário. Não use listas longas.",
           inputAudioTranscription: {},
           outputAudioTranscription: {},
         },
@@ -317,3 +294,5 @@ function VoiceSession({ userApiKey, onBack }: { userApiKey: string, onBack: () =
     </motion.div>
   );
 }
+
+export default VoiceSession;

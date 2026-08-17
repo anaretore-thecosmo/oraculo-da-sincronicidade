@@ -34,4 +34,11 @@ Ao receber as tríades, você deve entregar:
 `;
 
 
-module.exports = { SYSTEM_INSTRUCTION };
+
+// Complemento usado APENAS na sessão de voz ao vivo. Migrado da linha 144
+// do App.tsx antigo, onde era concatenado ao systemInstruction.
+const VOZ_INSTRUCAO_EXTRA = `
+
+Você está em uma sessão de voz em tempo real. O consulente está usando seu próprio tarot físico ou oráculo pessoal. NÃO peça para o consulente tirar cartas digitais no app. Peça para ele descrever as cartas que tirou fisicamente e interprete-as com base na sabedoria da sincronicidade. Seja concisa, direta e mantenha o tom visionário. Não use listas longas.`;
+
+module.exports = { SYSTEM_INSTRUCTION, VOZ_INSTRUCAO_EXTRA };
