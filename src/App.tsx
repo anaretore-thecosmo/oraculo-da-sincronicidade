@@ -79,6 +79,21 @@ const READING_MODES = [
 
 
 
+
+// Quando o proxy devolve uma página de erro (504, 502), o corpo vem em HTML
+// e o .json() estoura com "Unexpected token '<'", que não diz nada a ninguém.
+// Aconteceu na narração em 16/08. Este helper transforma isso em recado.
+async function lerResposta(r: Response) {
+  const bruto = await r.text();
+  try {
+    return JSON.parse(bruto);
+  } catch {
+    if (r.status === 504) return { erro: 'O oráculo demorou mais do que o esperado. Tente novamente.' };
+    if (r.status === 502 || r.status === 503) return { erro: 'O oráculo está momentaneamente fora de alcance.' };
+    return { erro: 'Não foi possível completar agora. Tente novamente.' };
+  }
+}
+
 // --- Components ---
 
 export default function App() {
@@ -187,7 +202,7 @@ export default function App() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ carta: randomCard }),
       });
-      const dados = await resposta.json();
+      const dados = await lerResposta(resposta);
       if (!resposta.ok) throw new Error(dados.erro);
 
       setQuickAdvice({ card: randomCard, advice: dados.conselho });
@@ -473,7 +488,7 @@ Sincronicidade & Inteligência Artificial.
         }),
       });
 
-      const dados = await resposta.json();
+      const dados = await lerResposta(resposta);
 
       if (resposta.status === 402) {
         // Leituras gratuitas acabaram. Não é erro: é o fim do que era grátis.
@@ -540,7 +555,7 @@ Sincronicidade & Inteligência Artificial.
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ texto: content }),
       });
-      const dados = await resposta.json();
+      const dados = await lerResposta(resposta);
       if (!resposta.ok) throw new Error(dados.erro || 'A narração não pôde ser gerada agora.');
 
       const base64Audio = dados.audio;
@@ -588,7 +603,7 @@ Sincronicidade & Inteligência Artificial.
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ texto: content }),
       });
-      const dados = await resposta.json();
+      const dados = await lerResposta(resposta);
       if (!resposta.ok) throw new Error(dados.erro || 'A imagem não pôde ser gerada agora.');
 
       const imageUrl = dados.imagem ? `data:image/png;base64,${dados.imagem}` : "";

@@ -330,39 +330,66 @@ app.post('/api/oraculo/narracao', limiteLeitura, async (req, res) => {
   const entrada = narracaoSchema.safeParse(req.body);
   if (!entrada.success) return res.status(400).json({ erro: 'Texto para narrar não chegou.' });
 
-  const prompt = `Você é uma Mentora Espiritual firme, segura e visionária.
+  // Dois passos, e a ordem importa.
+  //
+  // O modelo de voz FALA o que recebe: ele não reescreve. Mandar para ele
+  // "converta a leitura abaixo em versão narrada" fazia com que às vezes
+  // ele respondesse em TEXTO, e o endpoint devolvia 502 sem áudio nenhum.
+  // Intermitente, porque dependia de o modelo interpretar a instrução como
+  // ordem ou como conteúdo a ser lido.
+  //
+  // Agora: o modelo de texto faz o roteiro, o modelo de voz só narra.
+  const roteiroPrompt = `Você é uma Mentora Espiritual firme, segura e visionária.
 
-Converta a leitura abaixo em uma versão narrada para áudio.
+Converta a leitura abaixo em uma versão falada, pronta para ser narrada em voz alta.
 
 Diretrizes obrigatórias:
 - Linguagem natural, fluida e magnética.
 - Frases levemente mais curtas do que no texto escrito.
-- Pequenas pausas implícitas.
 - Tom seguro, calmo e confiante.
-- Não use emojis.
-- Não use listas.
+- Não use emojis, não use listas, não use marcação.
 - Não mencione nomes de seções.
-- Transforme tudo em narrativa contínua.
+- Narrativa contínua, do começo ao fim.
 
-No encerramento, use esta variação:
+Encerre exatamente com:
 "O que se revelou aqui é maior do que coincidência. É sincronicidade. Mas sincronicidade só prospera quando há coragem. Faça a sua parte com clareza e decisão, e o Universo sustenta o movimento. Você já viu o que precisava ver. Agora avance. Que assim seja."
 
-Texto base da leitura:
+Responda APENAS com o texto a ser narrado, sem comentários seus.
+
+Leitura:
 ${entrada.data.texto}`;
 
   try {
+    const roteiro = await comRetry(() => ai.models.generateContent({
+      model: env.GEMINI_MODEL,
+      contents: roteiroPrompt,
+    }), 'narracao-roteiro');
+
+    const falar = roteiro.text;
+    if (!falar) {
+      log('erro', 'narracao_sem_roteiro');
+      return res.status(502).json({ erro: 'A narração não pôde ser gerada agora.' });
+    }
+
+    // Agora sim: só o texto, sem instrução nenhuma junto.
     const r = await comRetry(() => ai.models.generateContent({
       model: env.GEMINI_TTS_MODEL,
-      contents: [{ parts: [{ text: prompt }] }],
+      contents: [{ parts: [{ text: falar }] }],
       config: {
         responseModalities: ['AUDIO'],
         speechConfig: { voiceConfig: { prebuiltVoiceConfig: { voiceName: 'Kore' } } },
       },
-    }), 'narracao');
+    }), 'narracao-audio');
 
     const audio = r.candidates?.[0]?.content?.parts?.[0]?.inlineData?.data;
     if (!audio) {
-      log('erro', 'narracao_sem_audio');
+      // Registra o que veio no lugar do áudio. Sem isso, o diagnóstico
+      // deste caso levou mais tempo do que devia.
+      const parte = r.candidates?.[0]?.content?.parts?.[0];
+      log('erro', 'narracao_sem_audio', {
+        veio_texto: parte?.text ? parte.text.slice(0, 200) : null,
+        finishReason: r.candidates?.[0]?.finishReason ?? null,
+      });
       return res.status(502).json({ erro: 'A narração não pôde ser gerada agora.' });
     }
     log('info', 'narracao_entregue', { bytes: audio.length });

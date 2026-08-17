@@ -45,7 +45,9 @@ function VoiceSession({ onBack, onCreditos }: { onBack: () => void, onCreditos?:
     try {
       // Pede a chave da porta ao servidor. Ela abre uma sessão só.
       const r = await fetch('/api/oraculo/token-voz', { method: 'POST' });
-      const dados = await r.json();
+      const bruto = await r.text();
+      let dados: any;
+      try { dados = JSON.parse(bruto); } catch { dados = { erro: 'A sessão de voz não pôde ser aberta agora.' }; }
 
       if (r.status === 402) {
         setError('Suas leituras gratuitas se completaram.');
