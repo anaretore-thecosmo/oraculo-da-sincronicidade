@@ -536,6 +536,75 @@ app.post('/api/oraculo/token-voz', limiteLeitura, exigirCredito, async (req, res
 // ---------------------------------------------------------------------
 // 13. Sobe
 // ---------------------------------------------------------------------
-app.listen(env.PORT, '127.0.0.1', () => {
+const servidor = app.listen(env.PORT, '127.0.0.1', () => {
   log('info', 'servico_no_ar', { porta: env.PORT, modelo: env.GEMINI_MODEL });
+});
+
+// ---------------------------------------------------------------------
+// 14. Encerramento com graça
+//
+//     O processo morria sujo, e isso custava três coisas:
+//
+//     1. A gravação de créditos é agrupada com um setTimeout de 2s. Um
+//        restart dentro dessa janela descartava o crédito que a pessoa
+//        acabou de gastar. E restart não é hipótese remota: o teto de
+//        memória é 300M e uma narração sozinha leva o processo de 81MB
+//        para 129MB.
+//     2. Requisição em voo morria no meio, sem explicação para quem
+//        estava esperando.
+//     3. O motivo de uma queda inesperada se perdia, porque não havia
+//        onde registrar.
+//
+//     Auditoria arquitetural de 17/08/2026, item 2 do roadmap.
+// ---------------------------------------------------------------------
+let encerrando = false;
+
+function encerraComGraca(sinal) {
+  if (encerrando) return; // o PM2 manda SIGINT e SIGTERM; não fazer duas vezes
+  encerrando = true;
+
+  log('info', 'encerrando_com_graca', { sinal });
+
+  // Grava o ledger AGORA. gravarCreditos() é debounced de propósito para o
+  // caminho normal; aqui a escrita tem que ser imediata, com a mesma troca
+  // atômica do original para nunca deixar arquivo pela metade.
+  try {
+    if (gravacaoPendente) {
+      clearTimeout(gravacaoPendente);
+      gravacaoPendente = null;
+    }
+    const temp = `${ARQUIVO_CREDITOS}.tmp`;
+    fs.writeFileSync(temp, JSON.stringify(creditos));
+    fs.renameSync(temp, ARQUIVO_CREDITOS);
+    log('info', 'creditos_gravados_no_encerramento', { ips: Object.keys(creditos).length });
+  } catch (err) {
+    log('erro', 'creditos_perdidos_no_encerramento', { msg: err.message });
+  }
+
+  // Para de aceitar conexão nova e deixa a que está em voo terminar.
+  servidor.close(() => {
+    log('info', 'servico_encerrado', { sinal });
+    process.exit(0);
+  });
+
+  // Rede de segurança. Uma narração pode levar 150s e esperar isso travaria
+  // o deploy; 20s cobre leitura e conselho. Narração longa ainda morre — e é
+  // exatamente por isso que a narração assíncrona é o item 7 do roadmap:
+  // depois dela não existe mais requisição longa para drenar.
+  setTimeout(() => {
+    log('aviso', 'encerramento_forcado', { sinal, espera_s: 20 });
+    process.exit(0);
+  }, 20_000).unref();
+}
+
+process.on('SIGTERM', () => encerraComGraca('SIGTERM'));
+process.on('SIGINT', () => encerraComGraca('SIGINT'));
+
+process.on('uncaughtException', (err) => {
+  log('erro', 'excecao_nao_tratada', { msg: err.message, stack: err.stack });
+  encerraComGraca('uncaughtException');
+});
+
+process.on('unhandledRejection', (motivo) => {
+  log('erro', 'promessa_rejeitada', { msg: String(motivo) });
 });
