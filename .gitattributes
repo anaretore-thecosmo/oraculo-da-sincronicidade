@@ -1,0 +1,4 @@
+# Script que roda na VPS nasce e morre com fim de linha Unix.
+# Sem isto, o Windows entrega o arquivo com CRLF e o Linux responde
+# "bad interpreter: /usr/bin/bash^M" — erro que não parece o que é.
+*.sh text eol=lf
