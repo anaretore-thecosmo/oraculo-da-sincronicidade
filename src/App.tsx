@@ -7,6 +7,7 @@ import React, { useState, useRef, useEffect, lazy, Suspense } from 'react';
 import { motion, AnimatePresence } from "motion/react";
 import { Sparkles, Send, Moon, Sun, Compass, Eye, Zap, Volume2, Loader2, Image as ImageIcon, RotateCcw, LayoutGrid, Plus, Grid3X3, Mic, MicOff, Wand2, Feather, ChevronRight, LogOut, Info, X } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
+import MANIFESTO from './cartas.json';
 // Carregado sob demanda: o VoiceSession arrasta o SDK do Gemini junto,
 // e quem só faz leitura não tem por que baixar 277KB que nunca vai usar.
 const VoiceSession = lazy(() => import('./VoiceSession'));
@@ -38,6 +39,27 @@ const GYPSY_TAROT = [
   "O Caminho", "O Rato", "O Coração", "O Anel", "O Livro", "A Carta", "O Homem",
   "A Mulher", "Os Lírios", "O Sol", "A Lua", "A Chave", "O Peixe", "A Âncora", "A Cruz"
 ];
+
+// ---------------------------------------------------------------------
+// A arte oficial de cada carta.
+//
+// A chave leva o BARALHO junto, e não só o nome, porque quatro nomes
+// existem em dois baralhos ao mesmo tempo com artes diferentes: A Torre,
+// A Estrela, O Sol e A Lua são Arcano Maior E carta cigana. Procurar só
+// pelo nome traria a arte errada em oito das 114 — e traria calada.
+//
+// O vínculo carta→arquivo vive em src/cartas.json, escrito à mão, carta
+// por carta. scripts/verifica-cartas.mjs roda no prebuild e derruba o
+// build se faltar arte, se sobrar arquivo ou se algum nome divergir
+// desta lista. Nada aqui é resolvido por semelhança de texto.
+// ---------------------------------------------------------------------
+const ARTES = new Map(
+  MANIFESTO.cartas.map((c) => [`${c.baralho}|${c.nome}`, `/cartas/${c.id}.webp`])
+);
+
+function arteDaCarta(baralho: string, nome: string): string | undefined {
+  return ARTES.get(`${baralho}|${nome}`);
+}
 
 type AppState = 'landing' | 'input' | 'selecting' | 'loading' | 'reading' | 'voice';
 type SelectionPhase = 'major' | 'minor' | 'gypsy';
@@ -1040,9 +1062,9 @@ Sincronicidade & Inteligência Artificial.
               </div>
 
               {[
-                { title: 'Arcanos Maiores', cards: selectedMajor, type: 'Espiritual / Arquetípico' },
-                { title: 'Arcanos Menores', cards: selectedMinor, type: 'Psicológico / Cotidiano' },
-                { title: 'Baralho Cigano', cards: selectedGypsy, type: 'Material / Prático' }
+                { title: 'Arcanos Maiores', baralho: 'maiores', cards: selectedMajor, type: 'Espiritual / Arquetípico' },
+                { title: 'Arcanos Menores', baralho: 'menores', cards: selectedMinor, type: 'Psicológico / Cotidiano' },
+                { title: 'Baralho Cigano', baralho: 'cigano', cards: selectedGypsy, type: 'Material / Prático' }
               ].map((deck, deckIdx) => (
                 <div key={deckIdx} className="space-y-12">
                   <div className="flex flex-col items-center gap-2">
@@ -1072,13 +1094,19 @@ Sincronicidade & Inteligência Artificial.
 
                             {/* Card Front */}
                             <div className="absolute inset-0 backface-hidden rounded-xl border-2 border-gold bg-mystic-paper/5 flex flex-col items-center justify-center p-4 text-center shadow-2xl overflow-hidden rotate-y-180">
-                              <img 
-                                src={`https://picsum.photos/seed/${encodeURIComponent(card + " mystical energy")}/300/450`}
+                              <img
+                                src={arteDaCarta(deck.baralho, card)}
                                 alt={card}
-                                className="absolute inset-0 w-full h-full object-cover opacity-50 group-hover:opacity-70 transition-opacity duration-500"
-                                referrerPolicy="no-referrer"
+                                loading="lazy"
+                                width={600}
+                                height={900}
+                                className="absolute inset-0 w-full h-full object-cover"
                               />
-                              <div className="absolute inset-0 bg-gradient-to-t from-mystic-dark/80 via-transparent to-transparent" />
+                              {/* Antes a arte vinha a 50% sob um véu quase opaco, porque
+                                  era foto genérica de banco de imagens e não aguentava ser
+                                  vista. Agora é arte autoral: opacidade cheia, e o véu fica
+                                  só na faixa de baixo, onde o nome precisa de contraste. */}
+                              <div className="absolute inset-0 bg-gradient-to-t from-mystic-dark/85 via-mystic-dark/10 to-transparent" />
                               <span className="serif text-xs text-gold uppercase tracking-widest font-bold leading-tight relative z-10 drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)] px-2">{card}</span>
                             </div>
                           </motion.div>

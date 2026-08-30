@@ -39,7 +39,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const RAIZ = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
-const MANIFESTO = path.join(RAIZ, 'public', 'cartas', 'cartas.json');
+const MANIFESTO = path.join(RAIZ, 'src', 'cartas.json');
 const APP_TSX = path.join(RAIZ, 'src', 'App.tsx');
 
 const args = process.argv.slice(2);

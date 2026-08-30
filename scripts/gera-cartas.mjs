@@ -32,7 +32,7 @@ import { execFileSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 
 const RAIZ = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
-const MANIFESTO = path.join(RAIZ, 'public', 'cartas', 'cartas.json');
+const MANIFESTO = path.join(RAIZ, 'src', 'cartas.json');
 const DESTINO = path.join(RAIZ, 'public', 'cartas');
 
 const LARGURA = 600;
