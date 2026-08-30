@@ -1102,11 +1102,13 @@ Sincronicidade & Inteligência Artificial.
                                 height={900}
                                 className="absolute inset-0 w-full h-full object-cover"
                               />
-                              {/* Antes a arte vinha a 50% sob um véu quase opaco, porque
-                                  era foto genérica de banco de imagens e não aguentava ser
-                                  vista. Agora é arte autoral: opacidade cheia, e o véu fica
-                                  só na faixa de baixo, onde o nome precisa de contraste. */}
-                              <div className="absolute inset-0 bg-gradient-to-t from-mystic-dark/85 via-mystic-dark/10 to-transparent" />
+                              {/* Antes a arte vinha a 50% sob um véu quase opaco, porque era
+                                  foto genérica de banco de imagens e não aguentava ser vista.
+                                  Agora é arte autoral: opacidade cheia e véu mínimo.
+                                  O véu ficou fraco de propósito — cada arte traz o próprio
+                                  nome gravado no rodapé, e escurecer aquela faixa apagaria
+                                  justamente o que a artista desenhou para ser lido. */}
+                              <div className="absolute inset-0 bg-gradient-to-t from-mystic-dark/30 via-transparent to-transparent" />
                               <span className="serif text-xs text-gold uppercase tracking-widest font-bold leading-tight relative z-10 drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)] px-2">{card}</span>
                             </div>
                           </motion.div>
