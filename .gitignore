@@ -9,3 +9,6 @@ coverage/
 
 # dados de execucao do servico (creditos por IP)
 server/data/
+
+# artes originais das cartas: 320 MB de PNG, mestre no Drive, nao versionado
+artes-originais/
