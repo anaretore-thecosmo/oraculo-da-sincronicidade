@@ -9,7 +9,7 @@
     "preview": "vite preview",
     "clean": "rm -rf dist",
     "lint": "tsc --noEmit",
-    "prebuild": "node scripts/verifica-entrada.mjs && node scripts/verifica-cartas.mjs"
+    "prebuild": "node scripts/verifica-entrada.mjs && node scripts/verifica-cartas.mjs && node scripts/verifica-tiragens.mjs"
   },
   "dependencies": {
     "@google/genai": "^1.29.0",

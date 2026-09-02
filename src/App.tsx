@@ -8,6 +8,7 @@ import { motion, AnimatePresence } from "motion/react";
 import { Sparkles, Send, Moon, Sun, Compass, Eye, Zap, Volume2, Loader2, Image as ImageIcon, RotateCcw, LayoutGrid, Plus, Grid3X3, Mic, MicOff, Wand2, Feather, ChevronRight, LogOut, Info, X } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import MANIFESTO from './cartas.json';
+import TIRAGENS from './tiragens.json';
 // Carregado sob demanda: o VoiceSession arrasta o SDK do Gemini junto,
 // e quem só faz leitura não tem por que baixar 277KB que nunca vai usar.
 const VoiceSession = lazy(() => import('./VoiceSession'));
@@ -63,7 +64,13 @@ function arteDaCarta(baralho: string, nome: string): string | undefined {
 
 type AppState = 'landing' | 'input' | 'selecting' | 'loading' | 'reading' | 'voice';
 type SelectionPhase = 'major' | 'minor' | 'gypsy';
-type ReadingMode = '3-cards' | 'celtic-cross' | 'square-of-9';
+// 'celtic-cross' foi aposentado em 31/08/2026. O nome estava errado por
+// dentro: Cruz Celta é outro método, com dez posições. A Cruz Cigana do
+// Oráculo tem seis. Quem preenchesse a lacuna pelo identificador antigo
+// importaria a tradição errada — e ficaria plausível o bastante para
+// ninguém notar. O servidor ainda aceita o valor velho como alias, só
+// para não derrubar quem estava com a aba aberta durante o deploy.
+type ReadingMode = '3-cards' | 'cruz-cigana-6' | 'square-of-9';
 
 interface Message {
   role: 'user' | 'assistant';
@@ -75,29 +82,43 @@ interface Message {
   gypsyCards?: string[];
 }
 
-const READING_MODES = [
-  {
-    id: '3-cards',
-    title: '3 CARTAS',
-    description: 'Passado, Presente e Futuro',
-    icon: <span className="text-2xl font-serif text-gold">3</span>,
-    cardCount: 3
-  },
-  {
-    id: 'celtic-cross',
-    title: 'CRUZ CIGANA',
-    description: 'Análise profunda de situação',
-    icon: <Plus className="w-6 h-6 text-gold" />,
-    cardCount: 6
-  },
-  {
-    id: 'square-of-9',
-    title: 'QUADRADO DE 9',
-    description: 'Visão detalhada do momento',
-    icon: <LayoutGrid className="w-6 h-6 text-gold" />,
-    cardCount: 9
-  }
-];
+// ---------------------------------------------------------------------
+// As tiragens vêm de src/tiragens.json — a mesma definição que o servidor
+// usa para validar a entrada e para montar o prompt do diagnóstico.
+//
+// Nome visível, número de posições e nome de cada casa NÃO se escrevem
+// aqui: se estivessem em dois lugares, um dia divergiriam, e a tela
+// mostraria "Núcleo" onde o diagnóstico leu "Posição 1". Só o ícone
+// mora no código, porque é JSX e não cabe em JSON.
+// ---------------------------------------------------------------------
+const ICONES_TIRAGEM: Record<string, React.ReactNode> = {
+  '3-cards': <span className="text-2xl font-serif text-gold">3</span>,
+  'cruz-cigana-6': <Plus className="w-6 h-6 text-gold" />,
+  'square-of-9': <LayoutGrid className="w-6 h-6 text-gold" />,
+};
+
+const READING_MODES = TIRAGENS.tiragens.map((t) => ({
+  id: t.id,
+  title: t.titulo,
+  description: t.descricao,
+  icon: ICONES_TIRAGEM[t.id],
+  cardCount: t.posicoes,
+}));
+
+// A casa que ocupa determinada posição da tiragem escolhida.
+// indice é base zero (a ordem em que a carta foi consagrada).
+function casaDaTiragem(modo: string, indice: number) {
+  return TIRAGENS.tiragens.find((t) => t.id === modo)?.casas[indice];
+}
+
+// O que aparece embaixo da carta. Na tiragem de 3 o rótulo é curto
+// (Passado / Presente / Futuro), como sempre foi — o nome inteiro
+// (Passado/Raiz) é o que vai para o diagnóstico. Nas outras duas,
+// rótulo e nome são a mesma coisa.
+function rotuloDaCasa(modo: string, indice: number): string | undefined {
+  const casa = casaDaTiragem(modo, indice) as { nome: string; rotulo?: string } | undefined;
+  return casa?.rotulo ?? casa?.nome;
+}
 
 
 
@@ -1112,8 +1133,15 @@ Sincronicidade & Inteligência Artificial.
                               <span className="serif text-xs text-gold uppercase tracking-widest font-bold leading-tight relative z-10 drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)] px-2">{card}</span>
                             </div>
                           </motion.div>
-                          <span className="text-[10px] uppercase tracking-[0.3em] text-gold/40 font-medium">
-                            {readingMode === '3-cards' ? (cardIdx === 0 ? 'Passado' : cardIdx === 1 ? 'Presente' : 'Futuro') : `Posição ${cardIdx + 1}`}
+                          {/* O nome da casa vem da definição da tiragem, não de
+                              um ternário aqui. O número continua existindo, no
+                              title, para quem usa leitor de tela e para quando
+                              alguém precisar conferir contra o diagnóstico. */}
+                          <span
+                            className="text-[10px] uppercase tracking-[0.3em] text-gold/40 font-medium"
+                            title={`Posição ${cardIdx + 1} — ${casaDaTiragem(readingMode, cardIdx)?.nome ?? ''}`}
+                          >
+                            {rotuloDaCasa(readingMode, cardIdx) ?? `Posição ${cardIdx + 1}`}
                           </span>
                         </div>
                       );

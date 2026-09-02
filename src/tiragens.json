@@ -1,0 +1,127 @@
+{
+  "versao": 1,
+  "sobre": "Definicao canonica das tiragens do Oraculo da Sincronicidade. FONTE UNICA: o front (src/App.tsx), a validacao do servidor e a construcao do prompt do diagnostico (server/server.js) derivam TODOS deste arquivo. scripts/verifica-tiragens.mjs roda no prebuild e derruba o build se alguem voltar a escrever nome de posicao a mao em qualquer um dos tres lugares.",
+  "regraEstrutural": "Cada posicao contem tres cartas, uma de cada sistema: Arcano Maior (dimensao arquetipica), Arcano Menor (dimensao psicologica e comportamental) e Baralho Cigano (dimensao concreta e pratica). Logo: 3 posicoes = 9 cartas fisicas, 6 posicoes = 18, 9 posicoes = 27. O diagnostico integra PRIMEIRO as tres cartas de cada posicao e SO DEPOIS as relacoes entre posicoes. As cartas nunca sao tratadas como sequencia solta.",
+  "definidoPor": "Ana, em 31/08/2026. Antes desta data existiam apenas as contagens: o codigo dizia 'as 6 posicoes' e 'as 9 casas', sem nome, ordem nem funcao. Nada aqui foi inferido.",
+
+  "tiragens": [
+    {
+      "id": "3-cards",
+      "titulo": "3 CARTAS",
+      "descricao": "Passado, Presente e Futuro",
+      "objetivo": "Leitura de tres tempos: o que vem de tras, o que age agora e para onde tende.",
+      "posicoes": 3,
+      "aliases": [],
+      "casas": [
+        { "n": 1, "nome": "Passado/Raiz", "rotulo": "Passado" },
+        { "n": 2, "nome": "Presente/Ação", "rotulo": "Presente" },
+        { "n": 3, "nome": "Futuro/Tendência", "rotulo": "Futuro" }
+      ],
+      "notaRotulo": "O campo 'rotulo' existe so aqui: a tela desta tiragem ja mostrava Passado / Presente / Futuro antes de 31/08 e deve permanecer como estava. O 'nome' completo e o que vai para o diagnostico. Nas outras tiragens rotulo e nome sao a mesma coisa.",
+      "geometria": { "tipo": "linha", "linhas": [[1, 2, 3]] },
+      "ordemRevelacao": [1, 2, 3],
+      "ordemInterpretacao": [
+        { "titulo": "As tres triades, na ordem", "posicoes": [1, 2, 3] }
+      ],
+      "relacoes": [],
+      "nota": "Esta tiragem ja existia e permanece intacta. As casas nunca tiveram pergunta propria registrada — e nenhuma foi inventada aqui."
+    },
+
+    {
+      "id": "cruz-cigana-6",
+      "titulo": "CRUZ CIGANA",
+      "descricao": "Análise profunda de situação",
+      "objetivo": "Aprofundar uma pergunta complexa, revelando seu nucleo, aquilo que a sustenta, as forcas em conflito e a travessia possivel. NAO e uma Cruz Celta reduzida nem uma tiragem meramente preditiva: e o metodo de seis posicoes adotado pelo Oraculo da Sincronicidade.",
+      "posicoes": 6,
+      "aliases": ["celtic-cross"],
+      "casas": [
+        { "n": 1, "nome": "Núcleo",      "pergunta": "O que realmente está acontecendo nesta questão?", "local": "centro" },
+        { "n": 2, "nome": "Raiz",        "pergunta": "O que sustenta ou origina essa situação, inclusive abaixo do que está visível?", "local": "abaixo do Núcleo" },
+        { "n": 3, "nome": "Consciência", "pergunta": "O que precisa ser reconhecido ou compreendido agora?", "local": "acima do Núcleo" },
+        { "n": 4, "nome": "Tensão",      "pergunta": "O que bloqueia, condiciona, repete ou puxa a situação para trás?", "local": "à esquerda do Núcleo" },
+        { "n": 5, "nome": "Potência",    "pergunta": "Qual recurso, abertura ou capacidade está disponível?", "local": "à direita do Núcleo" },
+        { "n": 6, "nome": "Travessia",   "pergunta": "Qual direção se abre quando a potência é ativada e a tensão é atravessada?", "local": "extensão à direita da Potência" }
+      ],
+      "geometria": {
+        "tipo": "cruz",
+        "linhas": [
+          [null, 3, null, null],
+          [4, 1, 5, 6],
+          [null, 2, null, null]
+        ]
+      },
+      "ordemRevelacao": [1, 2, 3, 4, 5, 6],
+      "ordemInterpretacao": [
+        { "titulo": "As seis triades, uma a uma", "posicoes": [1, 2, 3, 4, 5, 6] },
+        { "titulo": "Eixo vertical", "posicoes": [2, 1, 3] },
+        { "titulo": "Eixo horizontal", "posicoes": [4, 1, 5, 6] }
+      ],
+      "relacoes": [
+        {
+          "nome": "Eixo vertical",
+          "posicoes": [2, 1, 3],
+          "funcao": "Mostra de onde a questao nasce e o que precisa chegar a consciencia."
+        },
+        {
+          "nome": "Eixo horizontal",
+          "posicoes": [4, 1, 5, 6],
+          "funcao": "Mostra o movimento possivel: aquilo que impede, o centro real da questao, o recurso disponivel e a direcao que se abre."
+        }
+      ]
+    },
+
+    {
+      "id": "square-of-9",
+      "titulo": "QUADRADO DE 9",
+      "descricao": "Visão detalhada do momento",
+      "objetivo": "Visao sistemica de uma pergunta complexa, mostrando como ela se organiza em tres tempos (colunas: Raiz, Agora, Tendencia) e tres planos (linhas: Interior, Campo, Materia).",
+      "posicoes": 9,
+      "aliases": [],
+      "casas": [
+        { "n": 1, "nome": "Raiz Interior",           "pergunta": "Qual padrão, crença, desejo ou memória interior foi trazido para esta questão?", "local": "coluna Raiz, linha Interior" },
+        { "n": 2, "nome": "Estado Interior",         "pergunta": "Como a pessoa está vivendo internamente esta questão agora?", "local": "coluna Agora, linha Interior" },
+        { "n": 3, "nome": "Potencial Interior",      "pergunta": "Qual transformação interior ou nova consciência pode emergir?", "local": "coluna Tendência, linha Interior" },
+        { "n": 4, "nome": "Raiz do Campo",           "pergunta": "Quais relações, forças ou dinâmicas anteriores ainda atuam sobre a questão?", "local": "coluna Raiz, linha do Campo" },
+        { "n": 5, "nome": "Núcleo",                  "pergunta": "Qual é a verdade, tensão ou tema central que organiza toda a leitura?", "local": "casa central — âncora do Quadrado" },
+        { "n": 6, "nome": "Movimento do Campo",      "pergunta": "Como as relações, forças e circunstâncias ao redor da questão estão se reorganizando?", "local": "coluna Tendência, linha do Campo" },
+        { "n": 7, "nome": "Base Material",           "pergunta": "Quais condições, estruturas, recursos ou consequências concretas sustentam a situação?", "local": "coluna Raiz, linha Material" },
+        { "n": 8, "nome": "Realidade Presente",      "pergunta": "O que está concretamente disponível, limitado ou acionável agora?", "local": "coluna Agora, linha Material" },
+        { "n": 9, "nome": "Manifestação Tendencial", "pergunta": "O que tende a se manifestar concretamente se a dinâmica atual continuar?", "local": "coluna Tendência, linha Material" }
+      ],
+      "geometria": {
+        "tipo": "grade",
+        "linhas": [
+          [1, 2, 3],
+          [4, 5, 6],
+          [7, 8, 9]
+        ]
+      },
+      "ancora": 5,
+      "cantos": [1, 3, 7, 9],
+      "ordemRevelacao": [1, 2, 3, 4, 5, 6, 7, 8, 9],
+      "ordemInterpretacao": [
+        { "titulo": "Núcleo", "posicoes": [5] },
+        { "titulo": "Eixo do Agora", "posicoes": [2, 5, 8] },
+        { "titulo": "Coluna das Raízes", "posicoes": [1, 4, 7] },
+        { "titulo": "Coluna das Tendências", "posicoes": [3, 6, 9] },
+        { "titulo": "Linha Interior", "posicoes": [1, 2, 3] },
+        { "titulo": "Linha do Campo", "posicoes": [4, 5, 6] },
+        { "titulo": "Linha Material", "posicoes": [7, 8, 9] },
+        { "titulo": "Diagonais", "posicoes": [1, 5, 9, 3, 7] },
+        { "titulo": "Síntese sistêmica", "posicoes": [] }
+      ],
+      "relacoes": [
+        { "nome": "Linha Interior",          "posicoes": [1, 2, 3], "funcao": "Evolucao interna: origem subjetiva, estado atual e potencial de transformacao." },
+        { "nome": "Linha do Campo",          "posicoes": [4, 5, 6], "funcao": "Evolucao das relacoes, influencias, encontros e forcas que participam da questao." },
+        { "nome": "Linha Material",          "posicoes": [7, 8, 9], "funcao": "Base concreta, realidade atual e aquilo que tende a se materializar." },
+        { "nome": "Coluna das Raízes",       "posicoes": [1, 4, 7], "funcao": "Integra as origens interior, sistemica e material da questao." },
+        { "nome": "Eixo do Agora",           "posicoes": [2, 5, 8], "funcao": "Integra estado interior, nucleo da questao e realidade concreta presente." },
+        { "nome": "Coluna das Tendências",   "posicoes": [3, 6, 9], "funcao": "Integra transformacao interior, movimento do campo e manifestacao provavel." },
+        { "nome": "Diagonal de Materialização", "posicoes": [1, 5, 9], "funcao": "Como uma raiz interior atravessa o nucleo da questao e tende a se converter em manifestacao concreta." },
+        { "nome": "Diagonal de Recalibração",   "posicoes": [3, 5, 7], "funcao": "Encontro entre o potencial interior, o nucleo da questao e as condicoes materiais ja existentes. Revela onde sera necessario ajustar expectativa, consciencia ou estrutura." }
+      ],
+      "notaCantos": "As posicoes 1, 3, 7 e 9 formam a moldura externa. Nao geram secao propria: entram na sintese, para mostrar se o campo esta coerente, polarizado ou em transicao entre suas origens e suas possibilidades.",
+      "notaTendencia": "Tendencia nunca e destino fixo: e o que tende a acontecer se as dinamicas atuais continuarem."
+    }
+  ]
+}

@@ -26,8 +26,11 @@ ESTRUTURA DO DIAGNÓSTICO FINAL:
 Ao receber as tríades, você deve entregar:
 1. # DIAGNÓSTICO DA SINCRONICIDADE (Título H1)
 2. ## O MOVIMENTO DO CAMPO (Visão geral da energia atual)
-3. ## ANÁLISE DAS TRÍADES (Por posição: Passado/Presente/Futuro ou conforme o modo)
+3. ## ANÁLISE DAS TRÍADES (uma seção por posição, com o NOME da casa que veio na mensagem)
    - Explique como o Arcano Maior, Menor e Cigano se fundem naquela posição específica.
+   - Depois das tríades, e antes da Sombra, percorra as relações estruturais da tiragem
+     (eixos, linhas, colunas, diagonais) na ordem de interpretação que a mensagem indicar.
+   - Nunca use os nomes de posição de uma tiragem em outra.
 4. ## A SOMBRA E O PONTO DE INFLEXÃO (Onde a energia estagna e como destravar)
 5. ## AJUSTE VIBRACIONAL (Recomendação de Fitoenergética - Banhos/Defumação com explicação técnica)
 6. ## SENTENÇA VISIONÁRIA (Encerramento padrão)

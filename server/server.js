@@ -198,20 +198,32 @@ const limiteLeitura = rateLimit({
 // ---------------------------------------------------------------------
 // 5. Contrato de entrada
 // ---------------------------------------------------------------------
+// As tiragens vêm do MESMO arquivo que o front usa, por server/tiragens.js.
+// Nome de casa, número de posições e relações não se escrevem aqui: até
+// 31/08/2026 este trecho dizia apenas "as 6 posições da Cruz Cigana", sem
+// nome nem função, e a tela dizia "Posição 1" — dois lugares falando da
+// mesma coisa sem se conhecer. Agora só existe uma fonte.
+const {
+  TIRAGEM_POR_ID,
+  IDS_ACEITOS,
+  montaMensagem,
+} = require('./tiragens');
+
 const leituraSchema = z.object({
   pergunta: z.string().min(3).max(2000),
-  modo: z.enum(['3-cards', 'celtic-cross', 'square-of-9']),
+  modo: z
+    .string()
+    .refine((v) => IDS_ACEITOS.includes(v), { message: 'tiragem desconhecida' })
+    .transform((v) => ALIAS_LEGADO.get(v) ?? v),
   profundidade: z.coerce.number().int().min(0).max(1000).default(500),
   arcanosMaiores: z.array(z.string()).min(1).max(9),
   arcanosMenores: z.array(z.string()).min(1).max(9),
   baralhoCigano: z.array(z.string()).min(1).max(9),
 });
 
-const INSTRUCOES_POR_MODO = {
-  '3-cards': 'Analise como: Posição 1 (Passado/Raiz), Posição 2 (Presente/Ação), Posição 3 (Futuro/Tendência). Cada posição tem uma tríade: Arcano Maior + Arcano Menor + Baralho Cigano.',
-  'celtic-cross': 'Analise as 6 posições da Cruz Cigana. Cada uma das 6 posições é composta por uma tríade: Arcano Maior + Arcano Menor + Baralho Cigano.',
-  'square-of-9': 'Analise como um Quadrado de 9 (3x3). Cada uma das 9 casas é composta por uma tríade: Arcano Maior + Arcano Menor + Baralho Cigano.',
-};
+
+
+
 
 // ---------------------------------------------------------------------
 // 6. Healthcheck
@@ -264,21 +276,35 @@ app.post('/api/oraculo/leitura', limiteLeitura, exigirCredito, async (req, res) 
   }
 
   const d = entrada.data;
+
+  // A contagem tem que fechar com a tiragem escolhida: uma carta de cada
+  // sistema por posição, nem mais nem menos. Sem isto, uma Cruz Cigana
+  // com 5 arcanos maiores entraria calada e a sexta tríade sairia sem
+  // Arcano Maior — a IA preencheria o buraco sem avisar ninguém.
+  const tiragemEscolhida = TIRAGEM_POR_ID.get(d.modo);
+  const contagens = [d.arcanosMaiores.length, d.arcanosMenores.length, d.baralhoCigano.length];
+  if (contagens.some((n) => n !== tiragemEscolhida.posicoes)) {
+    log('aviso', 'contagem_nao_bate', {
+      modo: d.modo,
+      esperado: tiragemEscolhida.posicoes,
+      recebido: contagens,
+    });
+    return res.status(400).json({
+      erro: `A ${tiragemEscolhida.titulo} pede ${tiragemEscolhida.posicoes} cartas de cada baralho.`,
+    });
+  }
+
   const profundidadeTexto = d.profundidade < 300
     ? 'direta e prática'
     : d.profundidade > 700
       ? 'profunda, espiritual e cármica'
       : 'equilibrada';
 
-  const mensagem = `Sou a Sacerdotisa Visionária. Realize o Diagnóstico da Sincronicidade.
-Tríades por posição:
-Arcanos Maiores: ${d.arcanosMaiores.join(', ')}
-Arcanos Menores: ${d.arcanosMenores.join(', ')}
-Baralho Cigano: ${d.baralhoCigano.join(', ')}
+  // A tiragem já foi validada acima: existe e as três listas têm
+  // exatamente uma carta por posição.
+  const tiragem = TIRAGEM_POR_ID.get(d.modo);
 
-Instruções: ${INSTRUCOES_POR_MODO[d.modo]}
-Profundidade: ${profundidadeTexto}.
-Pergunta: ${d.pergunta}.`;
+  const mensagem = montaMensagem(tiragem, d, profundidadeTexto);
 
   try {
     const resposta = await comRetry(() => ai.models.generateContent({
