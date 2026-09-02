@@ -205,6 +205,7 @@ const limiteLeitura = rateLimit({
 // mesma coisa sem se conhecer. Agora só existe uma fonte.
 const {
   TIRAGEM_POR_ID,
+  ALIAS_LEGADO,
   IDS_ACEITOS,
   montaMensagem,
 } = require('./tiragens');

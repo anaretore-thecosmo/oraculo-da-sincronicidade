@@ -166,6 +166,29 @@ fi
 echo "resposta: $(cat /tmp/oraculo-health.$$)"
 rm -f /tmp/oraculo-health.$$
 
+# ---------------------------------------------------------------------
+# 7b — o contrato da leitura responde?
+#
+#     Em 02/09/2026 um deploy passou por tudo — build, tres travas, health
+#     200 — com o servico quebrado: uma variavel que mudou de arquivo no
+#     refactor e nao foi importada. O /health nao toca o caminho da
+#     leitura, entao nao viu nada.
+#
+#     Este teste manda uma consulta DELIBERADAMENTE invalida (contagem de
+#     cartas errada) para cada tiragem e exige a recusa em JSON. Nao chama
+#     a IA, nao gasta credito de ninguem, e percorre schema, alias,
+#     normalizacao e a checagem de contagem — que e onde o erro estava.
+# ---------------------------------------------------------------------
+passo "Conferindo o contrato da leitura nas tres tiragens"
+for modo in 3-cards cruz-cigana-6 square-of-9; do
+  corpo="$(curl -s -m 15 -X POST http://127.0.0.1:3985/api/oraculo/leitura     -H 'Content-Type: application/json'     -d "{\"pergunta\":\"conferencia de deploy\",\"modo\":\"$modo\",\"arcanosMaiores\":[],\"arcanosMenores\":[],\"baralhoCigano\":[]}" || true)"
+  if ! echo "$corpo" | grep -q '"erro"'; then
+    echo "A tiragem $modo nao recusou uma consulta invalida. Resposta: '${corpo:-vazia}'"
+    false
+  fi
+  echo "  $modo: recusou como devia"
+done
+
 trap - ERR
 echo
 verde "DEPLOY OK — $(git rev-parse --short HEAD) no ar, health 200."
