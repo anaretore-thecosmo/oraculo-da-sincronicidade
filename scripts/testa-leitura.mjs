@@ -145,22 +145,26 @@ for (const tiragem of TIRAGENS.tiragens) {
     if (!prompt.includes(r.nome)) falha(`${onde}: a relação "${r.nome}" não entrou no prompt`);
   }
 
-  // 6 — vocabulário de outra tiragem não pode vazar
-  for (const outra of TIRAGENS.tiragens) {
-    if (outra.id === tiragem.id) continue;
-    for (const casa of outra.casas) {
-      // "Núcleo" existe na Cruz Cigana E no Quadrado de 9: nome repetido
-      // entre tiragens não é vazamento. Só acusa o que é exclusivo da outra.
-      const exclusivo = !tiragem.casas.some((c) => c.nome === casa.nome);
-      const soDaOutra = !TIRAGENS.tiragens.some(
-        (t) => t.id !== outra.id && t.id !== tiragem.id && t.casas.some((c) => c.nome === casa.nome)
-      );
-      if (exclusivo && soDaOutra && prompt.includes(casa.nome)) {
-        falha(`${onde}: o prompt cita "${casa.nome}", que é posição da ${outra.titulo}`);
-      }
-    }
+  // 6 — posição de outra tiragem não pode aparecer COMO POSIÇÃO aqui.
+  //     A comparação é sobre o cabeçalho "Posição N — Nome", não sobre a
+  //     palavra solta: "Raiz" é casa da Cruz Cigana e também aparece dentro
+  //     de "Raiz Interior" e "Coluna das Raízes" no Quadrado de 9, sem que
+  //     isso seja vazamento nenhum.
+  const cabecalhos = [...prompt.matchAll(/^Posição (\d+) — (.+)$/gm)].map((m) => m[2].trim());
+  const meus = new Set(tiragem.casas.map((c) => c.nome));
+  for (const c of cabecalhos) {
+    if (!meus.has(c)) falha(`${onde}: apareceu a posição "${c}", que não é desta tiragem`);
   }
-  if (/celta/i.test(prompt)) falha(`${onde}: a palavra "Celta" apareceu no prompt`);
+  if (cabecalhos.length !== n) {
+    falha(`${onde}: o prompt traz ${cabecalhos.length} cabeçalhos de posição, esperado ${n}`);
+  }
+
+  // A Cruz Celta só pode ser citada onde a própria definição a cita, para
+  // dizer que a Cruz Cigana NÃO é ela. Fora do objetivo, é contaminação.
+  const semObjetivo = prompt.replace(tiragem.objetivo, '');
+  if (/celta/i.test(semObjetivo)) {
+    falha(`${onde}: "Celta" apareceu no prompt fora da frase da própria definição`);
+  }
 
   console.log(
     `  ${tiragem.titulo.padEnd(15)} ${n} posições · ${n * 3} cartas · ` +

@@ -49,7 +49,8 @@ if [[ -z "${ORACULO_DEPLOY_COPIA:-}" ]]; then
   _raiz="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
   _copia="$(mktemp /tmp/deploy-oraculo.XXXXXXXX.sh)"
   cat "${BASH_SOURCE[0]}" > "$_copia"
-  ORACULO_DEPLOY_COPIA="$_copia" ORACULO_DEPLOY_RAIZ="$_raiz" exec bash "$_copia" "$@"
+  export ORACULO_DEPLOY_COPIA="$_copia" ORACULO_DEPLOY_RAIZ="$_raiz"
+  exec bash "$_copia" "$@"
 fi
 
 RAIZ="$ORACULO_DEPLOY_RAIZ"
@@ -154,7 +155,13 @@ if [[ "$SHA_NO_REPO" != "$SHA_DESTE_SCRIPT" ]]; then
   passo "O deploy.sh mudou neste pull ($SHA_DESTE_SCRIPT -> $SHA_NO_REPO). Recarregando, uma vez so."
   _nova="$(mktemp /tmp/deploy-oraculo.XXXXXXXX.sh)"
   cat infra/deploy.sh > "$_nova"
-  ORACULO_DEPLOY_COPIA="$_nova"   ORACULO_DEPLOY_COPIA_VELHA="$ORACULO_DEPLOY_COPIA"   ORACULO_DEPLOY_RAIZ="$RAIZ"   ORACULO_DEPLOY_REEXEC=1   ORACULO_DEPLOY_PONTO_RETORNO="$ANTES"   exec bash "$_nova" "$@"
+  export ORACULO_DEPLOY_COPIA_VELHA="$ORACULO_DEPLOY_COPIA"
+  export ORACULO_DEPLOY_COPIA="$_nova"
+  export ORACULO_DEPLOY_RAIZ="$RAIZ"
+  export ORACULO_DEPLOY_REEXEC=1
+  export ORACULO_DEPLOY_PONTO_RETORNO="$ANTES"
+  echo "  ponto de retorno preservado na recarga: $ANTES"
+  exec bash "$_nova" "$@"
 fi
 
 DEPOIS="$(git rev-parse HEAD)"
