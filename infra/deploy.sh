@@ -47,6 +47,9 @@ set -Eeuo pipefail
 # ---------------------------------------------------------------------
 if [[ -z "${ORACULO_DEPLOY_COPIA:-}" ]]; then
   _raiz="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+  # Higiene: copia esquecida por execucao interrompida nao mora em /tmp
+  # para sempre. So as de mais de um dia, nunca a de um deploy em curso.
+  find /tmp -maxdepth 1 -name 'deploy-oraculo.*.sh' -mtime +1 -delete 2>/dev/null || true
   _copia="$(mktemp /tmp/deploy-oraculo.XXXXXXXX.sh)"
   cat "${BASH_SOURCE[0]}" > "$_copia"
   export ORACULO_DEPLOY_COPIA="$_copia" ORACULO_DEPLOY_RAIZ="$_raiz"
