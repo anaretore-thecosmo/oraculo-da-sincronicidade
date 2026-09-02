@@ -241,5 +241,5 @@ node scripts/testa-leitura.mjs
 
 trap - ERR
 echo
-verde "DEPLOY OK — $(git rev-parse --short HEAD) no ar, health 200."
+verde "DEPLOY OK — $(git rev-parse --short HEAD) no ar, health 200, por deploy.sh $SHA_DESTE_SCRIPT."
 verde "Este verde veio de uma medição de agora: curl no domínio público."
