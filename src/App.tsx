@@ -147,6 +147,14 @@ export default function App() {
   const [appState, setAppState] = useState<AppState>('landing');
   const [selectionPhase, setSelectionPhase] = useState<SelectionPhase>('major');
   const [readingMode, setReadingMode] = useState<ReadingMode>('3-cards');
+
+  // O Quadrado de 9 se desenha como tabuleiro 3x3, e nao como fileira que
+  // quebra onde couber. A geometria dele nao e enfeite: e ela que sustenta
+  // a leitura do Nucleo no centro, das tres linhas, das tres colunas e das
+  // duas diagonais. Se as nove cartas quebram em 5+4, a diagonal 1-5-9
+  // deixa de existir aos olhos de quem le. As outras duas tiragens seguem
+  // no layout de sempre.
+  const emTabuleiro = readingMode === 'square-of-9';
   const [depth, setDepth] = useState(500);
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
@@ -1094,23 +1102,37 @@ Sincronicidade & Inteligência Artificial.
                     <div className="h-px w-32 bg-gold/20 mt-4" />
                   </div>
 
-                  <div className="flex flex-wrap justify-center gap-8">
+                  <div
+                    className={
+                      emTabuleiro
+                        ? // Tres colunas SEMPRE, inclusive no celular: a topologia e o
+                          // conteudo. O que se adapta e o tamanho — a carta ocupa a
+                          // celula e mantem 2:3, a mesma proporcao da arte original.
+                          'grid grid-cols-3 gap-2 sm:gap-4 md:gap-6 w-full max-w-[34rem] mx-auto px-1'
+                        : 'flex flex-wrap justify-center gap-8'
+                    }
+                  >
                     {deck.cards.map((card, cardIdx) => {
                       const isRevealed = revealedCards.has(card);
                       return (
-                        <div key={cardIdx} className="flex flex-col items-center space-y-6">
+                        <div
+                          key={cardIdx}
+                          className={`flex flex-col items-center ${emTabuleiro ? 'space-y-2 sm:space-y-3' : 'space-y-6'}`}
+                        >
                           <motion.div
                             onClick={() => toggleReveal(card)}
                             animate={{ rotateY: isRevealed ? 180 : 0 }}
                             transition={{ duration: 0.6, type: "spring", stiffness: 260, damping: 20 }}
-                            className="relative w-40 h-60 cursor-pointer preserve-3d group"
+                            className={`relative cursor-pointer preserve-3d group ${
+                              emTabuleiro ? 'w-full aspect-[2/3]' : 'w-40 h-60'
+                            }`}
                           >
                             {/* Card Back */}
-                            <div className={`absolute inset-0 backface-hidden rounded-xl border-2 border-gold/30 bg-mystic-dark flex flex-col items-center justify-center p-6 shadow-2xl transition-all group-hover:border-gold/60 ${isRevealed ? 'pointer-events-none' : ''}`}>
+                            <div className={`absolute inset-0 backface-hidden rounded-xl border-2 border-gold/30 bg-mystic-dark flex flex-col items-center justify-center ${emTabuleiro ? 'p-2 sm:p-4' : 'p-6'} shadow-2xl transition-all group-hover:border-gold/60 ${isRevealed ? 'pointer-events-none' : ''}`}>
                               <div className="w-full h-full border border-gold/10 rounded-lg flex items-center justify-center bg-[radial-gradient(circle_at_center,rgba(197,160,89,0.05)_0%,transparent_70%)]">
-                                <Sun className="w-12 h-12 text-gold/20" />
+                                <Sun className={emTabuleiro ? 'w-1/3 h-1/3 text-gold/20' : 'w-12 h-12 text-gold/20'} />
                               </div>
-                              <div className="absolute bottom-4 text-[8px] text-gold/30 uppercase tracking-[0.3em]">Posição {cardIdx + 1}</div>
+                              <div className={`absolute text-[8px] text-gold/30 uppercase ${emTabuleiro ? 'bottom-1.5 tracking-[0.1em]' : 'bottom-4 tracking-[0.3em]'}`}>Posição {cardIdx + 1}</div>
                             </div>
 
                             {/* Card Front */}
@@ -1138,7 +1160,13 @@ Sincronicidade & Inteligência Artificial.
                               title, para quem usa leitor de tela e para quando
                               alguém precisar conferir contra o diagnóstico. */}
                           <span
-                            className="text-[10px] uppercase tracking-[0.3em] text-gold/40 font-medium"
+                            className={`text-[10px] uppercase text-gold/40 font-medium ${
+                              emTabuleiro
+                                ? // Nome longo como "Manifestacao Tendencial" quebra em duas
+                                  // linhas em vez de estourar a celula ou ser cortado.
+                                  'tracking-[0.1em] leading-tight text-center w-full [overflow-wrap:anywhere]'
+                                : 'tracking-[0.3em]'
+                            }`}
                             title={`Posição ${cardIdx + 1} — ${casaDaTiragem(readingMode, cardIdx)?.nome ?? ''}`}
                           >
                             {rotuloDaCasa(readingMode, cardIdx) ?? `Posição ${cardIdx + 1}`}
