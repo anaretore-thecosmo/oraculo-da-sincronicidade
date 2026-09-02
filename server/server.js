@@ -172,7 +172,27 @@ function consumirCredito(req) {
   gravarCreditos();
 }
 
+// Ensaio de leitura: percorre TODO o caminho válido — schema, alias,
+// normalização, contagem, definição das posições, formação das tríades e
+// montagem do prompt — e para no instante anterior a chamar o Gemini.
+//
+// Existe porque em 02/09/2026 uma queda de produção passou por build, três
+// travas e health 200: o /health não toca a rota da leitura, e a consulta
+// inválida não percorre o caminho válido inteiro. Agora o deploy percorre.
+//
+// Só é honrado com o x-diag-token correto. Sem token, o campo é ignorado e
+// a consulta segue como leitura normal. Não consome crédito, não exige
+// crédito e nunca chega ao provedor.
+function ehEnsaio(req) {
+  return (
+    req.body?.ensaio === true &&
+    !!process.env.DIAG_TOKEN &&
+    req.get('x-diag-token') === process.env.DIAG_TOKEN
+  );
+}
+
 function exigirCredito(req, res, next) {
+  if (ehEnsaio(req)) return next();
   if (restantes(req) > 0) return next();
 
   log('info', 'creditos_esgotados', { usadas: usadas(req) });
@@ -306,6 +326,17 @@ app.post('/api/oraculo/leitura', limiteLeitura, exigirCredito, async (req, res) 
   const tiragem = TIRAGEM_POR_ID.get(d.modo);
 
   const mensagem = montaMensagem(tiragem, d, profundidadeTexto);
+
+  if (ehEnsaio(req)) {
+    log('info', 'ensaio_de_leitura', { modo: d.modo, posicoes: tiragem.posicoes });
+    return res.json({
+      ensaio: true,
+      modo: d.modo,
+      titulo: tiragem.titulo,
+      posicoes: tiragem.posicoes,
+      prompt: mensagem,
+    });
+  }
 
   try {
     const resposta = await comRetry(() => ai.models.generateContent({
