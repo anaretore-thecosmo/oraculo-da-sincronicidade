@@ -291,7 +291,7 @@ app.post('/api/oraculo/leitura', limiteLeitura, exigirCredito, async (req, res) 
       recebido: contagens,
     });
     return res.status(400).json({
-      erro: `A ${tiragemEscolhida.titulo} pede ${tiragemEscolhida.posicoes} cartas de cada baralho.`,
+      erro: `${tiragemEscolhida.titulo} pede ${tiragemEscolhida.posicoes} cartas de cada baralho.`,
     });
   }
 
