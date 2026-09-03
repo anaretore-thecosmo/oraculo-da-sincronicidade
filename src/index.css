@@ -10,6 +10,24 @@
   
   --color-panel-bg: var(--panel-bg);
   --color-panel-border: var(--panel-border);
+
+  /* Ouro legivel: o mesmo dourado no tema escuro, e um dourado escurecido
+     no tema claro. Medido em 02/09/2026: #C5A059 sobre o creme #F5F2ED da
+     2.20:1 — reprova em qualquer tamanho de texto. #7E6020 da 5.25:1.
+     O #C5A059 continua sendo a cor da marca em borda, fundo e ornamento;
+     o que muda e o que ele NAO precisa mais fazer: carregar texto pequeno
+     sobre fundo claro, funcao para a qual nao tem contraste. */
+  --color-gold-texto: var(--gold-texto);
+
+  /* Texto secundario como cor solida, nao como opacidade. Opacidade
+     resolvia num tema e reprovava no outro; token resolve nos dois.
+     Escuro 8.78:1 · claro 7.25:1. */
+  --color-suave: var(--texto-suave);
+
+  /* Texto sobre fundo dourado. Fixo nos dois temas, porque o fundo e o
+     mesmo dourado nos dois. Antes usava mystic-dark, que vira creme no
+     tema claro: creme sobre ouro da 2.20:1. */
+  --color-sobre-ouro: #0A0A0B;
 }
 
 :root {
@@ -17,6 +35,8 @@
   --text-color: #F5F2ED;
   --panel-bg: rgba(255, 255, 255, 0.05);
   --panel-border: rgba(255, 255, 255, 0.1);
+  --gold-texto: #C5A059;
+  --texto-suave: #AEACA9;
 }
 
 :root.light {
@@ -24,6 +44,8 @@
   --text-color: #0A0A0B;
   --panel-bg: rgba(0, 0, 0, 0.03);
   --panel-border: rgba(0, 0, 0, 0.08);
+  --gold-texto: #7E6020;
+  --texto-suave: #504F4F;
 }
 
 body {

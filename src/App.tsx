@@ -92,9 +92,9 @@ interface Message {
 // mora no código, porque é JSX e não cabe em JSON.
 // ---------------------------------------------------------------------
 const ICONES_TIRAGEM: Record<string, React.ReactNode> = {
-  '3-cards': <span className="text-2xl font-serif text-gold">3</span>,
-  'cruz-cigana-6': <Plus className="w-6 h-6 text-gold" />,
-  'square-of-9': <LayoutGrid className="w-6 h-6 text-gold" />,
+  '3-cards': <span className="text-2xl font-serif text-gold-texto">3</span>,
+  'cruz-cigana-6': <Plus className="w-6 h-6 text-gold-texto" />,
+  'square-of-9': <LayoutGrid className="w-6 h-6 text-gold-texto" />,
 };
 
 const READING_MODES = TIRAGENS.tiragens.map((t) => ({
@@ -681,10 +681,10 @@ Sincronicidade & Inteligência Artificial.
       <header className="sticky top-0 z-50 glass-panel m-4 px-6 py-4 flex items-center justify-between">
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 rounded-full bg-gold/20 flex items-center justify-center border border-gold/30 shadow-[0_0_15px_rgba(197,160,89,0.2)]">
-            <Eye className="text-gold w-5 h-5" />
+            <Eye className="text-gold-texto w-5 h-5" />
           </div>
           <div onClick={handleNewReading} className="cursor-pointer">
-            <h1 className="serif text-xl font-semibold tracking-wide text-gold uppercase">Oráculo da Sincronicidade</h1>
+            <h1 className="serif text-xl font-semibold tracking-wide text-gold-texto uppercase">Oráculo da Sincronicidade</h1>
             <p className="text-[10px] uppercase tracking-[0.2em] opacity-50 font-medium text-center">Inteligência Ancestral & Artificial</p>
           </div>
         </div>
@@ -692,7 +692,7 @@ Sincronicidade & Inteligência Artificial.
           {appState !== 'landing' && (
             <button
               onClick={handleNewReading}
-              className={`flex items-center gap-2 px-4 py-2 rounded-full border transition-all ${isDarkMode ? 'bg-gold/10 border-gold/20 text-gold hover:bg-gold hover:text-mystic-dark' : 'bg-gold/20 border-gold/30 text-gold hover:bg-gold hover:text-white'}`}
+              className={`flex items-center gap-2 px-4 py-2 rounded-full border transition-all ${isDarkMode ? 'bg-gold/10 border-gold/20 text-gold-texto hover:bg-gold hover:text-sobre-ouro' : 'bg-gold/20 border-gold/30 text-gold-texto hover:bg-gold hover:text-white'}`}
             >
               <RotateCcw className="w-3 h-3" />
               Início
@@ -703,33 +703,33 @@ Sincronicidade & Inteligência Artificial.
               <div className="flex items-center gap-2 border-r border-gold/10 pr-4 mr-2 hidden md:flex">
                 <button 
                   onClick={handleQuickAdvice}
-                  className="p-2 rounded-full text-gold/40 hover:text-gold hover:bg-gold/10 transition-all group relative"
+                  className="p-2 rounded-full text-suave hover:text-gold-texto hover:bg-gold/10 transition-all group relative"
                   title="Sincronicidade Instantânea"
                 >
                   <Zap className="w-4 h-4" />
-                  <span className="absolute -bottom-8 left-1/2 -translate-x-1/2 bg-mystic-dark text-gold text-[8px] py-1 px-2 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap border border-gold/20 z-[60]">Conselho Rápido</span>
+                  <span className="absolute -bottom-8 left-1/2 -translate-x-1/2 bg-mystic-dark text-gold-texto text-[8px] py-1 px-2 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap border border-gold/20 z-[60]">Conselho Rápido</span>
                 </button>
                 <button 
                   onClick={() => setShowIntentionGuide(true)}
-                  className="p-2 rounded-full text-gold/40 hover:text-gold hover:bg-gold/10 transition-all group relative"
+                  className="p-2 rounded-full text-suave hover:text-gold-texto hover:bg-gold/10 transition-all group relative"
                   title="Guia de Intenção"
                 >
                   <Compass className="w-4 h-4" />
-                  <span className="absolute -bottom-8 left-1/2 -translate-x-1/2 bg-mystic-dark text-gold text-[8px] py-1 px-2 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap border border-gold/20 z-[60]">Guia de Intenção</span>
+                  <span className="absolute -bottom-8 left-1/2 -translate-x-1/2 bg-mystic-dark text-gold-texto text-[8px] py-1 px-2 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap border border-gold/20 z-[60]">Guia de Intenção</span>
                 </button>
                 <button 
                   onClick={handleEnergyClearing}
-                  className="p-2 rounded-full text-gold/40 hover:text-gold hover:bg-gold/10 transition-all group relative"
+                  className="p-2 rounded-full text-suave hover:text-gold-texto hover:bg-gold/10 transition-all group relative"
                   title="Limpeza Energética"
                 >
                   <Eye className={`w-4 h-4 ${isClearing ? 'animate-spin' : ''}`} />
-                  <span className="absolute -bottom-8 left-1/2 -translate-x-1/2 bg-mystic-dark text-gold text-[8px] py-1 px-2 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap border border-gold/20 z-[60]">Limpar Campo</span>
+                  <span className="absolute -bottom-8 left-1/2 -translate-x-1/2 bg-mystic-dark text-gold-texto text-[8px] py-1 px-2 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap border border-gold/20 z-[60]">Limpar Campo</span>
                 </button>
               </div>
             )}
             <button 
               onClick={toggleTheme}
-              className={`p-2 rounded-full transition-all ${isDarkMode ? 'text-gold/40 hover:text-gold hover:bg-panel-bg' : 'text-gold/60 hover:text-gold hover:bg-panel-bg'}`}
+              className={`p-2 rounded-full transition-all ${isDarkMode ? 'text-suave hover:text-gold-texto hover:bg-panel-bg' : 'text-suave hover:text-gold-texto hover:bg-panel-bg'}`}
               title={isDarkMode ? "Modo Claro" : "Modo Escuro"}
             >
               {isDarkMode ? <Moon className="w-5 h-5" /> : <Sun className="w-5 h-5" />}
@@ -747,17 +747,17 @@ Sincronicidade & Inteligência Artificial.
             className="flex flex-col items-center justify-center min-h-[70vh] text-center space-y-12"
           >
             <div className="space-y-4">
-              <h1 className="serif text-5xl md:text-7xl text-gold tracking-tighter uppercase leading-none">Oráculo da<br/>Sincronicidade</h1>
-              <p className="text-[12px] uppercase tracking-[0.5em] text-gold/60 font-bold">Inteligência Ancestral & Artificial</p>
+              <h1 className="serif text-5xl md:text-7xl text-gold-texto tracking-tighter uppercase leading-none">Oráculo da<br/>Sincronicidade</h1>
+              <p className="text-[12px] uppercase tracking-[0.5em] text-suave font-bold">Inteligência Ancestral & Artificial</p>
               <div className="h-px w-24 bg-gold/30 mx-auto my-8" />
               <h2 className="serif text-2xl md:text-3xl text-mystic-paper tracking-tight italic">Como o destino se revela para você hoje?</h2>
-              <p className="text-mystic-paper/40 max-w-2xl mx-auto text-sm">
+              <p className="text-suave max-w-2xl mx-auto text-sm">
                 A sabedoria das cartas encontra o campo inteligente que organiza os acontecimentos.
               </p>
 
               {/* Leituras por conta da casa. Discreto: informa sem pressionar. */}
               {creditos && !esgotado && (
-                <p className="text-[10px] uppercase tracking-[0.3em] text-gold/50 pt-2">
+                <p className="text-[10px] uppercase tracking-[0.3em] text-suave pt-2">
                   {creditos.restantes === 1
                     ? 'Última leitura por conta da casa'
                     : `${creditos.restantes} leituras por conta da casa`}
@@ -767,19 +767,19 @@ Sincronicidade & Inteligência Artificial.
 
             {esgotado && (
               <div className="glass-panel p-10 w-full max-w-2xl space-y-6 border-gold/20">
-                <h3 className="serif text-2xl text-gold uppercase tracking-wider">O campo pede uma pausa</h3>
-                <p className="text-mystic-paper/60 text-sm leading-relaxed">
+                <h3 className="serif text-2xl text-gold-texto uppercase tracking-wider">O campo pede uma pausa</h3>
+                <p className="text-suave text-sm leading-relaxed">
                   Suas leituras por conta da casa se completaram. O que se revelou até aqui continua valendo, e o oráculo segue aberto para quem quiser atravessar.
                 </p>
                 {creditos?.linkCompra ? (
                   <a
                     href={creditos.linkCompra}
-                    className="inline-block px-10 py-4 rounded-xl bg-gold text-mystic-dark uppercase tracking-[0.3em] text-xs font-bold hover:scale-[1.02] transition-all"
+                    className="inline-block px-10 py-4 rounded-xl bg-gold text-sobre-ouro uppercase tracking-[0.3em] text-xs font-bold hover:scale-[1.02] transition-all"
                   >
                     Continuar a travessia
                   </a>
                 ) : (
-                  <p className="text-[10px] uppercase tracking-[0.2em] text-gold/50">Em breve, a continuação</p>
+                  <p className="text-[10px] uppercase tracking-[0.2em] text-suave">Em breve, a continuação</p>
                 )}
               </div>
             )}
@@ -798,7 +798,7 @@ Sincronicidade & Inteligência Artificial.
                   </div>
                   <div className="space-y-2">
                     <h3 className="serif text-2xl text-mystic-paper uppercase tracking-wider">{mode.title}</h3>
-                    <p className="text-mystic-paper/40 text-sm">{mode.description}</p>
+                    <p className="text-suave text-sm">{mode.description}</p>
                   </div>
                 </motion.div>
               ))}
@@ -814,11 +814,11 @@ Sincronicidade & Inteligência Artificial.
                 className="glass-panel p-6 flex items-center gap-6 border-white/5 hover:border-gold/30 cursor-pointer group transition-all"
               >
                 <div className="w-12 h-12 rounded-full bg-gold/10 flex items-center justify-center border border-gold/20 group-hover:bg-gold/20 transition-all">
-                  <Mic className="w-5 h-5 text-gold" />
+                  <Mic className="w-5 h-5 text-gold-texto" />
                 </div>
                 <div className="text-left">
                   <h4 className="serif text-lg text-mystic-paper uppercase">Sessão por Voz</h4>
-                  <p className="text-xs text-mystic-paper/40 italic">Use seu tarot físico e revele as cartas que o Oráculo irá interpretar</p>
+                  <p className="text-xs text-suave italic">Use seu tarot físico e revele as cartas que o Oráculo irá interpretar</p>
                 </div>
               </motion.div>
             </div>
@@ -828,8 +828,8 @@ Sincronicidade & Inteligência Artificial.
         {appState === 'voice' && (
           <Suspense fallback={
             <div className="flex flex-col items-center justify-center min-h-[60vh] gap-4">
-              <Loader2 className="w-8 h-8 text-gold animate-spin" />
-              <p className="text-[10px] uppercase tracking-[0.3em] text-gold/50">Abrindo o canal</p>
+              <Loader2 className="w-8 h-8 text-gold-texto animate-spin" />
+              <p className="text-[10px] uppercase tracking-[0.3em] text-suave">Abrindo o canal</p>
             </div>
           }>
             <VoiceSession
@@ -858,14 +858,14 @@ Sincronicidade & Inteligência Artificial.
               <div className="absolute top-0 left-0 w-full h-1 bg-gold/20" />
               
               <div className="text-center space-y-4">
-                <Feather className="w-8 h-8 text-gold mx-auto animate-float" />
-                <h2 className="serif text-3xl text-gold uppercase tracking-widest">Abra seu Coração</h2>
-                <p className="text-mystic-paper/40 text-sm">Explique detalhadamente sua situação para uma resposta mais assertiva.</p>
+                <Feather className="w-8 h-8 text-gold-texto mx-auto animate-float" />
+                <h2 className="serif text-3xl text-gold-texto uppercase tracking-widest">Abra seu Coração</h2>
+                <p className="text-suave text-sm">Explique detalhadamente sua situação para uma resposta mais assertiva.</p>
               </div>
 
               <div className="space-y-6">
                 <div className="space-y-2">
-                  <label className="text-[10px] uppercase tracking-[0.2em] text-gold/60 font-medium">Sua dúvida ou intenção</label>
+                  <label className="text-[10px] uppercase tracking-[0.2em] text-suave font-medium">Sua dúvida ou intenção</label>
                   <div className="relative group/input">
                     <textarea
                       value={input}
@@ -880,7 +880,7 @@ Sincronicidade & Inteligência Artificial.
                         whileHover={{ scale: 1.2, color: '#D4AF37' }}
                         whileTap={{ scale: 0.9 }}
                         onClick={() => setInput('')}
-                        className="absolute top-4 right-4 p-2 text-gold/20 transition-colors"
+                        className="absolute top-4 right-4 p-2 text-suave transition-colors"
                         title="Limpar texto"
                       >
                         <X className="w-4 h-4" />
@@ -894,7 +894,7 @@ Sincronicidade & Inteligência Artificial.
                       className={`absolute bottom-6 right-6 p-3 rounded-full transition-all duration-500 z-30 cursor-pointer pointer-events-auto ${
                         isRecording 
                           ? 'bg-red-500/20 text-red-500 animate-pulse shadow-[0_0_20px_rgba(239,68,68,0.3)] border border-red-500/50' 
-                          : 'bg-gold/5 text-gold/40 hover:text-gold hover:bg-gold/10 border border-gold/10'
+                          : 'bg-gold/5 text-suave hover:text-gold-texto hover:bg-gold/10 border border-gold/10'
                       }`}
                       title={isRecording ? "Parar Gravação" : "Falar com o Oráculo"}
                     >
@@ -924,8 +924,8 @@ Sincronicidade & Inteligência Artificial.
 
                 <div className="glass-panel p-8 space-y-6 bg-mystic-dark/30">
                   <div className="flex justify-between items-center">
-                    <label className="text-[10px] uppercase tracking-[0.2em] text-gold/60 font-medium">Profundidade da Leitura</label>
-                    <span className="text-gold font-mono text-sm">{depth}</span>
+                    <label className="text-[10px] uppercase tracking-[0.2em] text-suave font-medium">Profundidade da Leitura</label>
+                    <span className="text-gold-texto font-mono text-sm">{depth}</span>
                   </div>
                   <input 
                     type="range" 
@@ -935,7 +935,7 @@ Sincronicidade & Inteligência Artificial.
                     onChange={(e) => setDepth(parseInt(e.target.value))}
                     className="w-full accent-gold bg-panel-border h-1 rounded-full appearance-none cursor-pointer"
                   />
-                  <div className="flex justify-between text-[8px] uppercase tracking-widest text-mystic-paper/30">
+                  <div className="flex justify-between text-[8px] uppercase tracking-widest text-suave">
                     <span>Direto e Prático</span>
                     <span>Espiritual e Karma</span>
                   </div>
@@ -944,7 +944,7 @@ Sincronicidade & Inteligência Artificial.
                 <button
                   onClick={startSelection}
                   disabled={!input.trim()}
-                  className="w-full py-6 rounded-2xl bg-panel-bg border border-panel-border text-mystic-paper/40 uppercase tracking-[0.3em] text-sm font-semibold hover:bg-gold/10 hover:text-gold hover:border-gold/30 transition-all disabled:opacity-20 disabled:cursor-not-allowed shadow-xl"
+                  className="w-full py-6 rounded-2xl bg-panel-bg border border-panel-border text-suave uppercase tracking-[0.3em] text-sm font-semibold hover:bg-gold/10 hover:text-gold-texto hover:border-gold/30 transition-all disabled:opacity-20 disabled:cursor-not-allowed shadow-xl"
                 >
                   Consagrar Pergunta
                 </button>
@@ -963,7 +963,7 @@ Sincronicidade & Inteligência Artificial.
               <h2 className="serif text-4xl text-mystic-paper italic uppercase tracking-widest">
                 {selectionPhase === 'major' ? 'Arcanos Maiores' : selectionPhase === 'minor' ? 'Arcanos Menores' : 'Baralho Cigano'}
               </h2>
-              <p className="text-gold/60 text-sm uppercase tracking-widest">
+              <p className="text-suave text-sm uppercase tracking-widest">
                 {selectionPhase === 'major' ? 'Escolha as forças arquetípicas' : selectionPhase === 'minor' ? 'Escolha as influências cotidianas' : 'Escolha os movimentos concretos'}
               </p>
               
@@ -979,13 +979,13 @@ Sincronicidade & Inteligência Artificial.
                     );
                   })}
                 </div>
-                <p className="text-gold/60 text-[10px] uppercase tracking-[0.3em] font-bold">
+                <p className="text-suave text-[10px] uppercase tracking-[0.3em] font-bold">
                   {(selectionPhase === 'major' ? selectedMajor : selectionPhase === 'minor' ? selectedMinor : selectedGypsy).length} de {READING_MODES.find(m => m.id === readingMode)?.cardCount} cartas consagradas
                 </p>
               </div>
               <button 
                 onClick={() => shuffleCards(selectionPhase)}
-                className="flex items-center gap-2 mx-auto px-6 py-3 rounded-full bg-panel-bg border border-panel-border text-mystic-paper/60 text-xs uppercase tracking-widest hover:bg-panel-border transition-all"
+                className="flex items-center gap-2 mx-auto px-6 py-3 rounded-full bg-panel-bg border border-panel-border text-suave text-xs uppercase tracking-widest hover:bg-panel-border transition-all"
               >
                 <RotateCcw className="w-4 h-4" />
                 Embaralhar Deck
@@ -1018,7 +1018,7 @@ Sincronicidade & Inteligência Artificial.
 
                     {isSelected && (
                       <div className="absolute inset-0 bg-gold/40 flex items-center justify-center backdrop-blur-sm">
-                        <div className="w-10 h-10 rounded-full bg-gold flex items-center justify-center text-mystic-dark font-bold shadow-[0_0_20px_rgba(197,160,89,0.5)]">
+                        <div className="w-10 h-10 rounded-full bg-gold flex items-center justify-center text-sobre-ouro font-bold shadow-[0_0_20px_rgba(197,160,89,0.5)]">
                           {currentSelected.indexOf(card) + 1}
                         </div>
                       </div>
@@ -1035,7 +1035,7 @@ Sincronicidade & Inteligência Artificial.
                   else if (selectionPhase === 'minor') setSelectedMinor([]);
                   else setSelectedGypsy([]);
                 }}
-                className="px-8 py-4 rounded-full border border-panel-border text-mystic-paper/40 uppercase tracking-widest text-xs hover:bg-panel-bg transition-all"
+                className="px-8 py-4 rounded-full border border-panel-border text-suave uppercase tracking-widest text-xs hover:bg-panel-bg transition-all"
               >
                 Limpar Escolha
               </button>
@@ -1046,7 +1046,7 @@ Sincronicidade & Inteligência Artificial.
                   selectedMinor.length < (READING_MODES.find(m => m.id === readingMode)?.cardCount || 3) ||
                   selectedGypsy.length < (READING_MODES.find(m => m.id === readingMode)?.cardCount || 3)
                 }
-                className="px-12 py-4 rounded-full bg-gradient-to-r from-gold/80 to-gold text-mystic-dark uppercase tracking-widest text-xs font-bold hover:scale-105 transition-all disabled:opacity-20 disabled:grayscale"
+                className="px-12 py-4 rounded-full bg-gradient-to-r from-gold/80 to-gold text-sobre-ouro uppercase tracking-widest text-xs font-bold hover:scale-105 transition-all disabled:opacity-20 disabled:grayscale"
               >
                 <div className="flex items-center gap-2">
                   <Zap className="w-4 h-4" />
@@ -1066,8 +1066,8 @@ Sincronicidade & Inteligência Artificial.
               <div className="absolute -top-2 -right-2 w-6 h-6 bg-gold rounded-full animate-ping" />
             </div>
             <div className="text-center space-y-2">
-              <h3 className="serif text-3xl text-gold italic">Consultando as forças...</h3>
-              <p className="text-mystic-paper/30 uppercase tracking-[0.3em] text-[10px]">O campo está se organizando</p>
+              <h3 className="serif text-3xl text-gold-texto italic">Consultando as forças...</h3>
+              <p className="text-suave uppercase tracking-[0.3em] text-[10px]">O campo está se organizando</p>
             </div>
           </div>
         )}
@@ -1081,10 +1081,10 @@ Sincronicidade & Inteligência Artificial.
             {/* Hierarchical Revelation Section */}
             <div className="space-y-24">
               <div className="flex flex-col items-center gap-6">
-                <h2 className="serif text-3xl text-gold uppercase tracking-[0.4em]">Revelação do Campo</h2>
+                <h2 className="serif text-3xl text-gold-texto uppercase tracking-[0.4em]">Revelação do Campo</h2>
                 <button 
                   onClick={revealAll}
-                  className="px-8 py-3 rounded-full bg-gold/10 border border-gold/30 text-gold text-[10px] uppercase tracking-[0.3em] hover:bg-gold hover:text-mystic-dark transition-all"
+                  className="px-8 py-3 rounded-full bg-gold/10 border border-gold/30 text-gold-texto text-[10px] uppercase tracking-[0.3em] hover:bg-gold hover:text-sobre-ouro transition-all"
                 >
                   Revelar Todas as Cartas
                 </button>
@@ -1098,7 +1098,7 @@ Sincronicidade & Inteligência Artificial.
                 <div key={deckIdx} className="space-y-12">
                   <div className="flex flex-col items-center gap-2">
                     <h3 className="serif text-2xl text-mystic-paper uppercase tracking-[0.3em] italic">{deck.title}</h3>
-                    <p className="text-[10px] text-gold/40 uppercase tracking-[0.4em]">{deck.type}</p>
+                    <p className="text-[10px] text-suave uppercase tracking-[0.4em]">{deck.type}</p>
                     <div className="h-px w-32 bg-gold/20 mt-4" />
                   </div>
 
@@ -1132,7 +1132,7 @@ Sincronicidade & Inteligência Artificial.
                               <div className="w-full h-full border border-gold/10 rounded-lg flex items-center justify-center bg-[radial-gradient(circle_at_center,rgba(197,160,89,0.05)_0%,transparent_70%)]">
                                 <Sun className={emTabuleiro ? 'w-1/3 h-1/3 text-gold/20' : 'w-12 h-12 text-gold/20'} />
                               </div>
-                              <div className={`absolute text-[8px] text-gold/30 uppercase ${emTabuleiro ? 'bottom-1.5 tracking-[0.1em]' : 'bottom-4 tracking-[0.3em]'}`}>Posição {cardIdx + 1}</div>
+                              <div className={`absolute text-[8px] text-suave uppercase ${emTabuleiro ? 'bottom-1.5 tracking-[0.1em]' : 'bottom-4 tracking-[0.3em]'}`}>Posição {cardIdx + 1}</div>
                             </div>
 
                             {/* Card Front */}
@@ -1152,7 +1152,7 @@ Sincronicidade & Inteligência Artificial.
                                   nome gravado no rodapé, e escurecer aquela faixa apagaria
                                   justamente o que a artista desenhou para ser lido. */}
                               <div className="absolute inset-0 bg-gradient-to-t from-mystic-dark/30 via-transparent to-transparent" />
-                              <span className="serif text-xs text-gold uppercase tracking-widest font-bold leading-tight relative z-10 drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)] px-2">{card}</span>
+                              <span className="serif text-xs text-gold-texto uppercase tracking-widest font-bold leading-tight relative z-10 drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)] px-2">{card}</span>
                             </div>
                           </motion.div>
                           {/* O nome da casa vem da definição da tiragem, não de
@@ -1160,7 +1160,7 @@ Sincronicidade & Inteligência Artificial.
                               title, para quem usa leitor de tela e para quando
                               alguém precisar conferir contra o diagnóstico. */}
                           <span
-                            className={`text-[10px] uppercase text-gold/40 font-medium ${
+                            className={`text-[10px] uppercase text-suave font-medium ${
                               emTabuleiro
                                 ? // Nome longo como "Manifestacao Tendencial" quebra em duas
                                   // linhas em vez de estourar a celula ou ser cortado.
@@ -1188,7 +1188,7 @@ Sincronicidade & Inteligência Artificial.
                 <div className="absolute top-8 right-8 flex gap-4">
                   <button
                     onClick={() => handleNarrate(msg.content, idx)}
-                    className={`p-3 rounded-full transition-all ${isNarrating === idx ? 'bg-gold text-mystic-dark' : 'bg-panel-bg text-gold/40 hover:text-gold hover:bg-panel-border'}`}
+                    className={`p-3 rounded-full transition-all ${isNarrating === idx ? 'bg-gold text-sobre-ouro' : 'bg-panel-bg text-suave hover:text-gold-texto hover:bg-panel-border'}`}
                     title="Ouvir a Profecia"
                   >
                     {isNarrating === idx ? (
@@ -1200,7 +1200,7 @@ Sincronicidade & Inteligência Artificial.
                   <button
                     onClick={() => handleGenerateImage(msg.content, idx)}
                     disabled={isGeneratingImage === idx || !!msg.generatedImage}
-                    className={`p-3 rounded-full transition-all ${isGeneratingImage === idx ? 'bg-gold text-mystic-dark' : msg.generatedImage ? 'bg-gold/20 text-gold cursor-default' : 'bg-panel-bg text-gold/40 hover:text-gold hover:bg-panel-border'}`}
+                    className={`p-3 rounded-full transition-all ${isGeneratingImage === idx ? 'bg-gold text-sobre-ouro' : msg.generatedImage ? 'bg-gold/20 text-gold-texto cursor-default' : 'bg-panel-bg text-suave hover:text-gold-texto hover:bg-panel-border'}`}
                     title="Materializar Imagem"
                   >
                     {isGeneratingImage === idx ? (
@@ -1228,21 +1228,21 @@ Sincronicidade & Inteligência Artificial.
                       referrerPolicy="no-referrer"
                     />
                     <div className="bg-mystic-dark/80 p-4 text-center">
-                      <p className="text-[10px] uppercase tracking-[0.3em] text-gold/60 font-bold">Frequência Vibracional Materializada</p>
+                      <p className="text-[10px] uppercase tracking-[0.3em] text-suave font-bold">Frequência Vibracional Materializada</p>
                     </div>
                   </motion.div>
                 )}
 
                 <div className="mt-20 pt-12 border-t border-white/5 flex flex-col items-center gap-8">
                   <div className="text-center space-y-2">
-                    <p className="text-[10px] uppercase tracking-[0.4em] text-gold/40">Diagnóstico Concluído</p>
-                    <h4 className="serif text-xl text-gold italic">O campo foi revelado. Como você deseja prosseguir?</h4>
+                    <p className="text-[10px] uppercase tracking-[0.4em] text-suave">Diagnóstico Concluído</p>
+                    <h4 className="serif text-xl text-gold-texto italic">O campo foi revelado. Como você deseja prosseguir?</h4>
                   </div>
                   
                   <div className="flex flex-wrap justify-center gap-4">
                     <button
                       onClick={handleNewReading}
-                      className="flex items-center gap-3 px-10 py-4 rounded-full bg-gold/10 border border-gold/20 text-gold uppercase tracking-[0.3em] text-xs font-bold hover:bg-gold hover:text-mystic-dark transition-all"
+                      className="flex items-center gap-3 px-10 py-4 rounded-full bg-gold/10 border border-gold/20 text-gold-texto uppercase tracking-[0.3em] text-xs font-bold hover:bg-gold hover:text-sobre-ouro transition-all"
                     >
                       <RotateCcw className="w-4 h-4" />
                       Nova Consulta
@@ -1250,7 +1250,7 @@ Sincronicidade & Inteligência Artificial.
                     
                     <button
                       onClick={handleSaveDiagnosis}
-                      className="flex items-center gap-3 px-10 py-4 rounded-full bg-panel-bg border border-panel-border text-mystic-paper/60 uppercase tracking-[0.3em] text-xs font-bold hover:bg-panel-border transition-all"
+                      className="flex items-center gap-3 px-10 py-4 rounded-full bg-panel-bg border border-panel-border text-suave uppercase tracking-[0.3em] text-xs font-bold hover:bg-panel-border transition-all"
                     >
                       <Plus className="w-4 h-4" />
                       Salvar Diagnóstico
@@ -1288,23 +1288,23 @@ Sincronicidade & Inteligência Artificial.
             >
               <div className="flex justify-center">
                 <div className="w-16 h-16 rounded-full bg-gold/10 flex items-center justify-center border border-gold/20">
-                  <Zap className="w-8 h-8 text-gold animate-pulse" />
+                  <Zap className="w-8 h-8 text-gold-texto animate-pulse" />
                 </div>
               </div>
               <div className="space-y-2">
-                <h3 className="serif text-2xl text-gold uppercase tracking-tighter">Sincronicidade Instantânea</h3>
-                <p className="text-[10px] uppercase tracking-[0.3em] text-gold/40">O conselho do agora</p>
+                <h3 className="serif text-2xl text-gold-texto uppercase tracking-tighter">Sincronicidade Instantânea</h3>
+                <p className="text-[10px] uppercase tracking-[0.3em] text-suave">O conselho do agora</p>
               </div>
               
               {isGeneratingQuickAdvice ? (
                 <div className="py-12 flex flex-col items-center gap-4">
-                  <Loader2 className="w-8 h-8 text-gold animate-spin" />
-                  <p className="text-xs text-gold/60 italic animate-pulse">Sintonizando frequências...</p>
+                  <Loader2 className="w-8 h-8 text-gold-texto animate-spin" />
+                  <p className="text-xs text-suave italic animate-pulse">Sintonizando frequências...</p>
                 </div>
               ) : quickAdvice ? (
                 <div className="space-y-6 py-4">
                   <div className="inline-block px-4 py-2 rounded-lg bg-gold/5 border border-gold/10">
-                    <span className="serif text-lg text-gold italic">{quickAdvice.card}</span>
+                    <span className="serif text-lg text-gold-texto italic">{quickAdvice.card}</span>
                   </div>
                   <p className="text-mystic-paper/80 leading-relaxed italic text-lg">
                     "{quickAdvice.advice}"
@@ -1314,7 +1314,7 @@ Sincronicidade & Inteligência Artificial.
 
               <button 
                 onClick={() => setShowQuickAdvice(false)}
-                className="w-full py-3 rounded-full bg-gold/10 border border-gold/20 text-gold uppercase tracking-[0.2em] text-[10px] font-bold hover:bg-gold hover:text-mystic-dark transition-all"
+                className="w-full py-3 rounded-full bg-gold/10 border border-gold/20 text-gold-texto uppercase tracking-[0.2em] text-[10px] font-bold hover:bg-gold hover:text-sobre-ouro transition-all"
               >
                 Gratidão
               </button>
@@ -1338,23 +1338,23 @@ Sincronicidade & Inteligência Artificial.
               onClick={e => e.stopPropagation()}
             >
               <div className="flex items-center gap-4 border-b border-gold/10 pb-4">
-                <Compass className="w-6 h-6 text-gold" />
-                <h3 className="serif text-xl text-gold uppercase tracking-tight">Guia de Intenção</h3>
+                <Compass className="w-6 h-6 text-gold-texto" />
+                <h3 className="serif text-xl text-gold-texto uppercase tracking-tight">Guia de Intenção</h3>
               </div>
               
               <div className="space-y-4 text-sm text-mystic-paper/70 leading-relaxed">
                 <p>Para que o Oráculo revele a verdade, sua pergunta deve ser como uma flecha: direta e focada.</p>
                 <ul className="space-y-3">
                   <li className="flex gap-3">
-                    <span className="text-gold font-bold">01.</span>
+                    <span className="text-gold-texto font-bold">01.</span>
                     <span>Evite perguntas de "Sim" ou "Não". O Oráculo prefere mostrar caminhos e energias.</span>
                   </li>
                   <li className="flex gap-3">
-                    <span className="text-gold font-bold">02.</span>
+                    <span className="text-gold-texto font-bold">02.</span>
                     <span>Em vez de "Vou conseguir o emprego?", tente "Qual energia devo cultivar para atrair esta oportunidade?".</span>
                   </li>
                   <li className="flex gap-3">
-                    <span className="text-gold font-bold">03.</span>
+                    <span className="text-gold-texto font-bold">03.</span>
                     <span>Respire fundo e visualize sua situação antes de escolher as cartas. A intenção é a chave.</span>
                   </li>
                 </ul>
@@ -1362,7 +1362,7 @@ Sincronicidade & Inteligência Artificial.
 
               <button 
                 onClick={() => setShowIntentionGuide(false)}
-                className="w-full py-3 rounded-full bg-gold/10 border border-gold/20 text-gold uppercase tracking-[0.2em] text-[10px] font-bold hover:bg-gold hover:text-mystic-dark transition-all"
+                className="w-full py-3 rounded-full bg-gold/10 border border-gold/20 text-gold-texto uppercase tracking-[0.2em] text-[10px] font-bold hover:bg-gold hover:text-sobre-ouro transition-all"
               >
                 Compreendo
               </button>
