@@ -84,6 +84,20 @@ body {
   @apply bg-panel-bg backdrop-blur-xl border border-panel-border rounded-2xl;
 }
 
+/* =====================================================================
+   FOCO VISIVEL
+   Medido em 02/09/2026: os elementos do fluxo principal recebiam foco com
+   outline-style: none. O foco existia e nao aparecia — para quem navega
+   por teclado, e o mesmo que nao existir.
+   O anel usa o ouro legivel, que tem 8.05:1 no tema escuro e 5.25:1 no
+   claro: visivel nos dois, sem depender de qual esta ativo.
+   ===================================================================== */
+:focus-visible {
+  outline: 2px solid var(--gold-texto);
+  outline-offset: 3px;
+  border-radius: 4px;
+}
+
 @keyframes float {
   0% { transform: translateY(0px); }
   50% { transform: translateY(-10px); }

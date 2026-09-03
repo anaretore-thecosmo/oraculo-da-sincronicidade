@@ -162,6 +162,17 @@ export default function App() {
     ? { duration: 0 }
     : { duration: 0.6, type: 'spring' as const, stiffness: 260, damping: 20 };
 
+  // Enter e Espaco em elemento que nao e <button> nativo. O Motion torna o
+  // elemento focavel, mas nao o torna acionavel: medido em 02/09/2026, o
+  // foco chegava nos cartoes e nas cartas e nenhuma tecla os ativava — a
+  // jornada inteira era impossivel sem mouse.
+  const aoTeclado = (acao: () => void) => (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault();
+      acao();
+    }
+  };
+
   // O Quadrado de 9 se desenha como tabuleiro 3x3, e nao como fileira que
   // quebra onde couber. A geometria dele nao e enfeite: e ela que sustenta
   // a leitura do Nucleo no centro, das tres linhas, das tres colunas e das
@@ -802,9 +813,13 @@ Sincronicidade & Inteligência Artificial.
               {READING_MODES.map((mode) => (
                 <motion.div
                   key={mode.id}
+                  role="button"
+                  tabIndex={0}
+                  aria-label={`${mode.title}. ${mode.description}. ${mode.cardCount * 3} cartas.`}
                   whileHover={realceSuspenso}
                   whileTap={toqueSuave}
                   onClick={() => selectMode(mode.id as ReadingMode)}
+                  onKeyDown={aoTeclado(() => selectMode(mode.id as ReadingMode))}
                   className="glass-panel p-8 cursor-pointer group flex flex-col items-center text-center space-y-6 border-white/5 hover:border-gold/30 transition-all"
                 >
                   <div className="w-16 h-16 rounded-2xl bg-gold/10 flex items-center justify-center border border-gold/20 group-hover:bg-gold/20 transition-all">
@@ -1014,9 +1029,18 @@ Sincronicidade & Inteligência Artificial.
                 return (
                   <motion.div
                     key={`${selectionPhase}-${i}`}
+                    role="button"
+                    tabIndex={0}
+                    aria-pressed={isSelected}
+                    // O nome acessivel NAO diz que carta e esta: durante a
+                    // consagracao ela esta virada para baixo, e quem enxerga
+                    // tambem nao sabe. Dizer aqui vazaria a carta para quem
+                    // usa leitor de tela e quebraria o proprio sorteio.
+                    aria-label={`Carta ${i + 1} de ${availableCards.length}`}
                     whileHover={realceCarta}
                     whileTap={toqueCarta}
                     onClick={() => handleCardClick(card)}
+                    onKeyDown={aoTeclado(() => handleCardClick(card))}
                     className={`relative aspect-[2/3] cursor-pointer transition-all duration-300 rounded-lg overflow-hidden border ${
                       isSelected 
                         ? 'border-gold shadow-[0_0_20px_rgba(197,160,89,0.3)]' 
@@ -1134,7 +1158,16 @@ Sincronicidade & Inteligência Artificial.
                           className={`flex flex-col items-center ${emTabuleiro ? 'space-y-2 sm:space-y-3' : 'space-y-6'}`}
                         >
                           <motion.div
+                            role="button"
+                            tabIndex={0}
+                            aria-pressed={isRevealed}
+                            aria-label={
+                              isRevealed
+                                ? `${casaDaTiragem(readingMode, cardIdx)?.nome ?? `Posição ${cardIdx + 1}`}: ${card}. Tocar para virar de volta.`
+                                : `${casaDaTiragem(readingMode, cardIdx)?.nome ?? `Posição ${cardIdx + 1}`}: carta virada para baixo. Tocar para revelar.`
+                            }
                             onClick={() => toggleReveal(card)}
+                            onKeyDown={aoTeclado(() => toggleReveal(card))}
                             animate={{ rotateY: isRevealed ? 180 : 0 }}
                             transition={viradaDaCarta}
                             className={`relative cursor-pointer preserve-3d group ${
