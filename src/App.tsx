@@ -485,6 +485,11 @@ export default function App() {
     setRevealedCards(new Set());
   };
 
+  // Escolhas do baralho que esta em consagracao agora.
+  const escolhasDesteBaralho =
+    selectionPhase === 'major' ? selectedMajor : selectionPhase === 'minor' ? selectedMinor : selectedGypsy;
+  const podeEmbaralhar = escolhasDesteBaralho.length === 0;
+
   const handleCardClick = (card: string) => {
     const modeInfo = READING_MODES.find(m => m.id === readingMode);
     const maxCards = modeInfo?.cardCount || 3;
@@ -1103,9 +1108,19 @@ Sincronicidade & Inteligência Artificial.
                   {(selectionPhase === 'major' ? selectedMajor : selectionPhase === 'minor' ? selectedMinor : selectedGypsy).length} de {READING_MODES.find(m => m.id === readingMode)?.cardCount} cartas consagradas
                 </p>
               </div>
-              <button 
-                onClick={() => shuffleCards(selectionPhase)}
-                className="flex items-center gap-2 mx-auto min-h-11 px-6 py-3 rounded-full bg-panel-bg border border-panel-border text-suave text-xs uppercase tracking-widest hover:bg-panel-border transition-all"
+              <button
+                onClick={() => {
+                  if (!podeEmbaralhar) {
+                    setAnuncio('Desmarque as cartas escolhidas para embaralhar novamente.');
+                    return;
+                  }
+                  shuffleCards(selectionPhase);
+                }}
+                aria-disabled={!podeEmbaralhar}
+                title={podeEmbaralhar ? undefined : 'Desmarque as cartas escolhidas para embaralhar novamente.'}
+                className={`flex items-center gap-2 mx-auto min-h-11 px-6 py-3 rounded-full bg-panel-bg border border-panel-border text-suave text-xs uppercase tracking-widest transition-all ${
+                  podeEmbaralhar ? 'hover:bg-panel-border' : 'opacity-40 cursor-not-allowed'
+                }`}
               >
                 <RotateCcw className="w-4 h-4" />
                 Embaralhar Deck
@@ -1127,7 +1142,7 @@ Sincronicidade & Inteligência Artificial.
                     // consagracao ela esta virada para baixo, e quem enxerga
                     // tambem nao sabe. Dizer aqui vazaria a carta para quem
                     // usa leitor de tela e quebraria o proprio sorteio.
-                    aria-label={`Carta ${i + 1} de ${availableCards.length}`}
+                    aria-label={`Carta ${i + 1} de ${availableCards.length}, virada para baixo`}
                     whileHover={realceCarta}
                     whileTap={toqueCarta}
                     onClick={() => handleCardClick(card)}
@@ -1146,11 +1161,7 @@ Sincronicidade & Inteligência Artificial.
                     </div>
 
                     {isSelected && (
-                      <div className="absolute inset-0 bg-gold/40 flex items-center justify-center backdrop-blur-sm">
-                        <div className="w-10 h-10 rounded-full bg-gold flex items-center justify-center text-sobre-ouro font-bold shadow-[0_0_20px_rgba(197,160,89,0.5)]">
-                          {currentSelected.indexOf(card) + 1}
-                        </div>
-                      </div>
+                      <div className="absolute inset-0 bg-gold/40 backdrop-blur-sm" />
                     )}
                   </motion.div>
                 );
@@ -1163,6 +1174,7 @@ Sincronicidade & Inteligência Artificial.
                   if (selectionPhase === 'major') setSelectedMajor([]);
                   else if (selectionPhase === 'minor') setSelectedMinor([]);
                   else setSelectedGypsy([]);
+                  setAnuncio('Escolhas desmarcadas. O baralho pode ser embaralhado de novo.');
                 }}
                 className="px-8 py-4 rounded-full border border-panel-border text-suave uppercase tracking-widest text-xs hover:bg-panel-bg transition-all"
               >
