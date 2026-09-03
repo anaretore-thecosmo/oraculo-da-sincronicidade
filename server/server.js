@@ -207,6 +207,41 @@ function exigirCredito(req, res, next) {
 // ---------------------------------------------------------------------
 // 4. Rate-limit — segunda camada, o Nginx é a primeira
 // ---------------------------------------------------------------------
+// ---------------------------------------------------------------------
+// 3d. Leituras já concluídas, por tentativa
+//
+//     O caso que isto resolve: a leitura termina aqui, o crédito é
+//     descontado, e a resposta não chega ao navegador — rede caiu, aba
+//     fechou, tempo estourou no caminho. A pessoa aperta "tentar de novo"
+//     e, sem esta memória, pagaria de novo por um trabalho já feito.
+//
+//     Guarda em memória, não em disco: é proteção para minutos, não para
+//     dias. Reinício do processo esvazia, e o pior caso volta a ser o de
+//     hoje. Teto de 50 para não crescer sem limite.
+// ---------------------------------------------------------------------
+const TENTATIVAS_TTL_MS = 30 * 60 * 1000;
+const TENTATIVAS_MAX = 50;
+const tentativas = new Map();
+
+function lembrarTentativa(id, texto) {
+  if (!id) return;
+  tentativas.set(id, { texto, quando: Date.now() });
+  while (tentativas.size > TENTATIVAS_MAX) {
+    tentativas.delete(tentativas.keys().next().value);
+  }
+}
+
+function tentativaJaConcluida(id) {
+  if (!id) return null;
+  const t = tentativas.get(id);
+  if (!t) return null;
+  if (Date.now() - t.quando > TENTATIVAS_TTL_MS) {
+    tentativas.delete(id);
+    return null;
+  }
+  return t.texto;
+}
+
 const limiteLeitura = rateLimit({
   windowMs: 60 * 1000,
   max: env.LEITURAS_POR_MINUTO,
@@ -237,6 +272,11 @@ const leituraSchema = z.object({
     .refine((v) => IDS_ACEITOS.includes(v), { message: 'tiragem desconhecida' })
     .transform((v) => ALIAS_LEGADO.get(v) ?? v),
   profundidade: z.coerce.number().int().min(0).max(1000).default(500),
+  // Identificador da TENTATIVA, não da pessoa. O navegador gera um por
+  // leitura e reusa ao tentar de novo com as mesmas cartas. É o que
+  // impede cobrar duas vezes quando a resposta conclui aqui e não chega
+  // do outro lado. Opcional: quem não mandar continua funcionando.
+  tentativaId: z.string().min(8).max(64).optional(),
   arcanosMaiores: z.array(z.string()).min(1).max(9),
   arcanosMenores: z.array(z.string()).min(1).max(9),
   baralhoCigano: z.array(z.string()).min(1).max(9),
@@ -325,6 +365,19 @@ app.post('/api/oraculo/leitura', limiteLeitura, exigirCredito, async (req, res) 
   // exatamente uma carta por posição.
   const tiragem = TIRAGEM_POR_ID.get(d.modo);
 
+  // Esta tentativa já foi concluída antes? Devolve o que ficou guardado,
+  // sem chamar o provedor e sem tocar no crédito.
+  const jaFeita = tentativaJaConcluida(d.tentativaId);
+  if (jaFeita) {
+    log('info', 'tentativa_reaproveitada', { modo: d.modo, restantes: restantes(req) });
+    return res.json({
+      leitura: jaFeita,
+      creditosRestantes: restantes(req),
+      reaproveitada: true,
+      creditoConsumido: false,
+    });
+  }
+
   const mensagem = montaMensagem(tiragem, d, profundidadeTexto);
 
   if (ehEnsaio(req)) {
@@ -352,6 +405,7 @@ app.post('/api/oraculo/leitura', limiteLeitura, exigirCredito, async (req, res) 
     }
 
     consumirCredito(req);
+    lembrarTentativa(d.tentativaId, texto);
     log('info', 'leitura_entregue', { modo: d.modo, ms: Date.now() - inicio, restantes: restantes(req) });
     return res.json({ leitura: texto, creditosRestantes: restantes(req) });
 
@@ -364,17 +418,24 @@ app.post('/api/oraculo/leitura', limiteLeitura, exigirCredito, async (req, res) 
       status: err.status ?? null,
     });
 
+    // Falha não consome crédito: consumirCredito() só roda depois de a
+    // leitura ter sido entregue. O campo abaixo diz isso de forma
+    // determinística, para a interface não precisar supor.
     const m = String(err.message || '');
+    const semCredito = { creditoConsumido: false };
+
     if (m.includes('API key') || m.includes('API_KEY') || err.status === 401 || err.status === 403) {
-      return res.status(500).json({ erro: 'O oráculo está temporariamente indisponível.' });
+      return res.status(500).json({ erro: 'O oráculo está temporariamente indisponível.', ...semCredito });
     }
     if (m.includes('model') || err.status === 404) {
-      return res.status(502).json({ erro: 'O oráculo está em manutenção. Tente mais tarde.' });
+      // Antes dizia "em manutenção", o que não era verdade: manutenção é
+      // trabalho programado, e o que houve foi modelo indisponível.
+      return res.status(502).json({ erro: 'O oráculo não conseguiu responder agora.', ...semCredito });
     }
     if (err.status === 429) {
-      return res.status(429).json({ erro: 'O oráculo pede uma pausa. Tente em alguns minutos.' });
+      return res.status(429).json({ erro: 'O oráculo pede uma pausa. Tente em alguns minutos.', ...semCredito });
     }
-    return res.status(502).json({ erro: 'Não foi possível completar a leitura agora.' });
+    return res.status(502).json({ erro: 'Não foi possível completar a leitura agora.', ...semCredito });
   }
 });
 

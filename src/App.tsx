@@ -148,6 +148,12 @@ export default function App() {
   const [selectionPhase, setSelectionPhase] = useState<SelectionPhase>('major');
   const [readingMode, setReadingMode] = useState<ReadingMode>('3-cards');
 
+  useEffect(() => {
+    if (appState !== 'loading') { setSegundosNaEspera(0); return; }
+    const t = setInterval(() => setSegundosNaEspera((s) => s + 1), 1000);
+    return () => clearInterval(t);
+  }, [appState]);
+
   // Quem pede movimento reduzido no sistema recebe a mesma informação sem
   // o deslocamento: a carta troca de face em vez de girar, e o realce de
   // toque some. O CSS cuida das animações declaradas em folha de estilo;
@@ -190,6 +196,18 @@ export default function App() {
   const [availableCards, setAvailableCards] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  // Identificador da tentativa. Nasce quando a pessoa manda revelar, e
+  // sobrevive à retentativa: é ele que impede o servidor de cobrar duas
+  // vezes se a leitura concluir lá e não chegar aqui.
+  const [tentativaId, setTentativaId] = useState<string | null>(null);
+  // Existe leitura pendente com estas mesmas cartas? É o que autoriza o
+  // botão de tentar de novo sem refazer a tiragem.
+  const [podeTentarDeNovo, setPodeTentarDeNovo] = useState(false);
+  // Segundos decorridos na espera. Tempo decorrido é fato; etapa do
+  // provedor seria invenção, porque o servidor não sabe em que ponto o
+  // Gemini está.
+  const [segundosNaEspera, setSegundosNaEspera] = useState(0);
   const [isNarrating, setIsNarrating] = useState<number | null>(null);
   const [isGeneratingImage, setIsGeneratingImage] = useState<number | null>(null);
   const [showQuickAdvice, setShowQuickAdvice] = useState(false);
@@ -436,6 +454,9 @@ export default function App() {
 
   const startSelection = () => {
     if (!input.trim()) return;
+    // Tiragem nova: tentativa nova, e a anterior deixa de valer.
+    setTentativaId(null);
+    setPodeTentarDeNovo(false);
     setSelectionPhase('major');
     shuffleCards('major');
     setAppState('selecting');
@@ -477,7 +498,18 @@ export default function App() {
   };
 
   const confirmSelection = () => {
-    performReading(selectedMajor, selectedMinor, selectedGypsy);
+    // Leitura nova, tentativa nova.
+    const id = crypto.randomUUID();
+    setTentativaId(id);
+    performReading(selectedMajor, selectedMinor, selectedGypsy, id);
+  };
+
+  // Tentar de novo com as MESMAS cartas: mesma tríade, mesma pergunta,
+  // mesmo identificador de tentativa. Não sorteia nada de novo.
+  const tentarDeNovo = () => {
+    const id = tentativaId ?? crypto.randomUUID();
+    if (!tentativaId) setTentativaId(id);
+    performReading(selectedMajor, selectedMinor, selectedGypsy, id);
   };
 
   const toggleReveal = (card: string) => {
@@ -531,10 +563,16 @@ Sincronicidade & Inteligência Artificial.
     URL.revokeObjectURL(url);
   };
 
-  const performReading = async (major: string[], minor: string[], gypsy: string[]) => {
+  const performReading = async (
+    major: string[],
+    minor: string[],
+    gypsy: string[],
+    idDaTentativa: string
+  ) => {
     setAppState('loading');
     setIsLoading(true);
     setError(null);
+    setPodeTentarDeNovo(false);
 
     const userMessage: Message = {
       role: 'user',
@@ -561,6 +599,7 @@ Sincronicidade & Inteligência Artificial.
           arcanosMaiores: major,
           arcanosMenores: minor,
           baralhoCigano: gypsy,
+          tentativaId: idDaTentativa,
         }),
       });
 
@@ -590,11 +629,20 @@ Sincronicidade & Inteligência Artificial.
       };
 
       setMessages(prev => [...prev, assistantMessage]);
+      setPodeTentarDeNovo(false);
       setAppState('reading');
     } catch (err: any) {
       console.error("ERRO NA LEITURA DO ORÁCULO:", err);
       // O serviço já devolve o motivo em texto de gente. Mostra o que ele disse.
-      setError(err.message || "Ocorreu um erro ao consultar o Oráculo. Tente novamente.");
+      // As cartas NÃO são apagadas aqui. Até 02/09/2026 a falha devolvia
+      // para a pergunta e o próximo passo zerava as três seleções: depois
+      // de até 157 segundos de espera, a pessoa reconsagrava 27 cartas por
+      // uma falha que não era dela.
+      setError(
+        err.message ||
+          'Não foi possível concluir a interpretação agora. Sua pergunta e suas cartas foram preservadas. Você não precisa realizar a tiragem novamente.'
+      );
+      setPodeTentarDeNovo(true);
       setAppState('input');
     } finally {
       setIsLoading(false);
@@ -875,12 +923,26 @@ Sincronicidade & Inteligência Artificial.
             className="max-w-3xl mx-auto w-full py-12 space-y-8"
           >
             {error && (
-              <motion.div 
+              <motion.div
                 initial={{ opacity: 0, y: -10 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="p-6 rounded-2xl bg-red-500/10 border border-red-500/20 text-red-500 text-center text-sm serif italic"
+                role="alert"
+                className="p-6 rounded-2xl bg-red-500/10 border border-red-500/20 text-center space-y-4"
               >
-                {error}
+                <p className="text-red-500 text-sm serif italic">{error}</p>
+
+                {/* A tiragem continua de pé: mesma pergunta, mesmas cartas,
+                    mesma tentativa. Não há novo sorteio, e o servidor
+                    reconhece a tentativa para não cobrar duas vezes. */}
+                {podeTentarDeNovo && (
+                  <button
+                    onClick={tentarDeNovo}
+                    disabled={isLoading}
+                    className="px-8 py-3 rounded-full bg-gold text-sobre-ouro uppercase tracking-[0.2em] text-xs font-semibold hover:opacity-90 transition-opacity disabled:opacity-50"
+                  >
+                    Tentar novamente com estas cartas
+                  </button>
+                )}
               </motion.div>
             )}
             <div className="glass-panel p-12 space-y-12 relative overflow-hidden">
@@ -1103,9 +1165,24 @@ Sincronicidade & Inteligência Artificial.
               </div>
               <div className="absolute -top-2 -right-2 w-6 h-6 bg-gold rounded-full animate-ping" />
             </div>
-            <div className="text-center space-y-2">
-              <h3 className="serif text-3xl text-gold-texto italic">Consultando as forças...</h3>
-              <p className="text-suave uppercase tracking-[0.3em] text-[10px]">O campo está se organizando</p>
+            <div className="text-center space-y-3 max-w-md px-6">
+              <h3 className="serif text-3xl text-gold-texto italic">
+                Suas cartas foram preservadas. A leitura está sendo integrada.
+              </h3>
+              {/* Tempo decorrido é fato observável. Etapa do provedor seria
+                  invenção: o servidor não sabe em que ponto o Gemini está,
+                  e barra de progresso aqui seria progresso fingido. */}
+              <p className="text-suave text-sm">
+                {segundosNaEspera < 60
+                  ? 'Isso pode levar alguns minutos. Você pode permanecer nesta página.'
+                  : 'A interpretação está levando mais tempo do que o habitual. Sua pergunta e suas cartas continuam preservadas.'}
+              </p>
+              <p
+                className="text-suave uppercase tracking-[0.3em] text-[10px] tabular-nums"
+                aria-live="polite"
+              >
+                {Math.floor(segundosNaEspera / 60)}:{String(segundosNaEspera % 60).padStart(2, '0')} decorrido
+              </p>
             </div>
           </div>
         )}
