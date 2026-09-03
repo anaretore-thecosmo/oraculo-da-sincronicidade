@@ -172,6 +172,10 @@ export default function App() {
   // elemento focavel, mas nao o torna acionavel: medido em 02/09/2026, o
   // foco chegava nos cartoes e nas cartas e nenhuma tecla os ativava — a
   // jornada inteira era impossivel sem mouse.
+  // Fase de CAPTURA, e nao a de borbulha: o Motion instala o proprio gesto
+  // de tecla nesses elementos e interrompe a propagacao antes que o
+  // manipulador do React seja alcancado. Testado com tecla fisica em
+  // 02/09/2026: com onKeyDown, o Enter nao fazia nada; com captura, faz.
   const aoTeclado = (acao: () => void) => (e: React.KeyboardEvent) => {
     if (e.key === 'Enter' || e.key === ' ') {
       e.preventDefault();
@@ -867,7 +871,7 @@ Sincronicidade & Inteligência Artificial.
                   whileHover={realceSuspenso}
                   whileTap={toqueSuave}
                   onClick={() => selectMode(mode.id as ReadingMode)}
-                  onKeyDown={aoTeclado(() => selectMode(mode.id as ReadingMode))}
+                  onKeyDownCapture={aoTeclado(() => selectMode(mode.id as ReadingMode))}
                   className="glass-panel p-8 cursor-pointer group flex flex-col items-center text-center space-y-6 border-white/5 hover:border-gold/30 transition-all"
                 >
                   <div className="w-16 h-16 rounded-2xl bg-gold/10 flex items-center justify-center border border-gold/20 group-hover:bg-gold/20 transition-all">
@@ -1102,7 +1106,7 @@ Sincronicidade & Inteligência Artificial.
                     whileHover={realceCarta}
                     whileTap={toqueCarta}
                     onClick={() => handleCardClick(card)}
-                    onKeyDown={aoTeclado(() => handleCardClick(card))}
+                    onKeyDownCapture={aoTeclado(() => handleCardClick(card))}
                     className={`relative aspect-[2/3] cursor-pointer transition-all duration-300 rounded-lg overflow-hidden border ${
                       isSelected 
                         ? 'border-gold shadow-[0_0_20px_rgba(197,160,89,0.3)]' 
@@ -1244,7 +1248,7 @@ Sincronicidade & Inteligência Artificial.
                                 : `${casaDaTiragem(readingMode, cardIdx)?.nome ?? `Posição ${cardIdx + 1}`}: carta virada para baixo. Tocar para revelar.`
                             }
                             onClick={() => toggleReveal(card)}
-                            onKeyDown={aoTeclado(() => toggleReveal(card))}
+                            onKeyDownCapture={aoTeclado(() => toggleReveal(card))}
                             animate={{ rotateY: isRevealed ? 180 : 0 }}
                             transition={viradaDaCarta}
                             className={`relative cursor-pointer preserve-3d group ${
