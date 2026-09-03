@@ -152,20 +152,29 @@ for (const tiragem of TIRAGENS.tiragens) {
   }
 
   const prompt = json.prompt || '';
+
+  // Sem expressao regular: o prompt e cortado nos cabecalhos de posicao e
+  // cada pedaco e conferido por conteudo. Nome de carta tem acento e
+  // parenteses, e escapar isso a mao e mais fragil do que so olhar dentro.
+  const pedacos = prompt.split(/^Posição /m).slice(1);
   let conferidas = 0;
   for (const casa of tiragem.casas) {
     const i = casa.n;
-    const esc = (s) => s.replace(/[.*+?^${}()|[\]\]/g, '\$&');
-    const bloco = new RegExp(
-      `Posição ${i} — ${esc(casa.nome)}` +
-        `[\s\S]*?Arcano Maior \(arquetípico\): ${esc(maiores[i - 1])}\n` +
-        `\s*Arcano Menor \(psicológico/comportamental\): ${esc(menores[i - 1])}\n` +
-        `\s*Baralho Cigano \(concreto/prático\): ${esc(ciganos[i - 1])}`
-    );
-    if (!bloco.test(prompt)) {
+    const pedaco = pedacos.find((t) => t.startsWith(String(i) + ' — ' + casa.nome));
+    if (!pedaco) {
+      falha(tiragem.id + ': a posicao ' + i + ' (' + casa.nome + ') nao apareceu no diagnostico');
+      continue;
+    }
+    const esperado = [
+      'Arcano Maior (arquetípico): ' + maiores[i - 1],
+      'Arcano Menor (psicológico/comportamental): ' + menores[i - 1],
+      'Baralho Cigano (concreto/prático): ' + ciganos[i - 1],
+    ];
+    const faltou = esperado.filter((linha) => !pedaco.includes(linha));
+    if (faltou.length) {
       falha(
-        `${tiragem.id}: a posição ${i} (${casa.nome}) não recebeu a ${i}ª escolha ` +
-          `(${maiores[i - 1]} / ${menores[i - 1]} / ${ciganos[i - 1]})`
+        tiragem.id + ': a posicao ' + i + ' (' + casa.nome + ') nao recebeu a ' + i +
+          'a escolha — faltou: ' + faltou.join(' | ')
       );
     } else {
       conferidas++;
