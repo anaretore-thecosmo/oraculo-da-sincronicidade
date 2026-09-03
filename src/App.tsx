@@ -477,6 +477,8 @@ export default function App() {
     setSelectionPhase('major');
     shuffleCards('major');
     setAppState('selecting');
+    const quantas = READING_MODES.find(m => m.id === readingMode)?.cardCount || 3;
+    setAnuncio(`Consagração aberta. Arcanos Maiores: escolha ${quantas} cartas.`);
     setSelectedMajor([]);
     setSelectedMinor([]);
     setSelectedGypsy([]);
@@ -792,7 +794,7 @@ Sincronicidade & Inteligência Artificial.
           {appState !== 'landing' && (
             <button
               onClick={handleNewReading}
-              className={`flex items-center gap-2 px-4 py-2 rounded-full border transition-all ${isDarkMode ? 'bg-gold/10 border-gold/20 text-gold-texto hover:bg-gold hover:text-sobre-ouro' : 'bg-gold/20 border-gold/30 text-gold-texto hover:bg-gold hover:text-white'}`}
+              className={`flex items-center gap-2 min-h-11 px-4 py-2 rounded-full border transition-all ${isDarkMode ? 'bg-gold/10 border-gold/20 text-gold-texto hover:bg-gold hover:text-sobre-ouro' : 'bg-gold/20 border-gold/30 text-gold-texto hover:bg-gold hover:text-white'}`}
             >
               <RotateCcw className="w-3 h-3" />
               Início
@@ -1103,7 +1105,7 @@ Sincronicidade & Inteligência Artificial.
               </div>
               <button 
                 onClick={() => shuffleCards(selectionPhase)}
-                className="flex items-center gap-2 mx-auto px-6 py-3 rounded-full bg-panel-bg border border-panel-border text-suave text-xs uppercase tracking-widest hover:bg-panel-border transition-all"
+                className="flex items-center gap-2 mx-auto min-h-11 px-6 py-3 rounded-full bg-panel-bg border border-panel-border text-suave text-xs uppercase tracking-widest hover:bg-panel-border transition-all"
               >
                 <RotateCcw className="w-4 h-4" />
                 Embaralhar Deck
