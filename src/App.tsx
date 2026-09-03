@@ -4,7 +4,7 @@
  */
 
 import React, { useState, useRef, useEffect, lazy, Suspense } from 'react';
-import { motion, AnimatePresence } from "motion/react";
+import { motion, AnimatePresence, useReducedMotion } from "motion/react";
 import { Sparkles, Send, Moon, Sun, Compass, Eye, Zap, Volume2, Loader2, Image as ImageIcon, RotateCcw, LayoutGrid, Plus, Grid3X3, Mic, MicOff, Wand2, Feather, ChevronRight, LogOut, Info, X } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import MANIFESTO from './cartas.json';
@@ -147,6 +147,20 @@ export default function App() {
   const [appState, setAppState] = useState<AppState>('landing');
   const [selectionPhase, setSelectionPhase] = useState<SelectionPhase>('major');
   const [readingMode, setReadingMode] = useState<ReadingMode>('3-cards');
+
+  // Quem pede movimento reduzido no sistema recebe a mesma informação sem
+  // o deslocamento: a carta troca de face em vez de girar, e o realce de
+  // toque some. O CSS cuida das animações declaradas em folha de estilo;
+  // isto aqui cuida das que o Motion controla por JavaScript, que a media
+  // query não alcança.
+  const semMovimento = useReducedMotion();
+  const realceSuspenso = semMovimento ? undefined : { y: -5, scale: 1.02 };
+  const realceCarta = semMovimento ? undefined : { y: -5, scale: 1.05 };
+  const toqueSuave = semMovimento ? undefined : { scale: 0.98 };
+  const toqueCarta = semMovimento ? undefined : { scale: 0.95 };
+  const viradaDaCarta = semMovimento
+    ? { duration: 0 }
+    : { duration: 0.6, type: 'spring' as const, stiffness: 260, damping: 20 };
 
   // O Quadrado de 9 se desenha como tabuleiro 3x3, e nao como fileira que
   // quebra onde couber. A geometria dele nao e enfeite: e ela que sustenta
@@ -788,8 +802,8 @@ Sincronicidade & Inteligência Artificial.
               {READING_MODES.map((mode) => (
                 <motion.div
                   key={mode.id}
-                  whileHover={{ y: -5, scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
+                  whileHover={realceSuspenso}
+                  whileTap={toqueSuave}
                   onClick={() => selectMode(mode.id as ReadingMode)}
                   className="glass-panel p-8 cursor-pointer group flex flex-col items-center text-center space-y-6 border-white/5 hover:border-gold/30 transition-all"
                 >
@@ -808,8 +822,8 @@ Sincronicidade & Inteligência Artificial.
                 servidor. Consome uma leitura, como qualquer consulta. */}
             <div className={`grid grid-cols-1 gap-6 w-full max-w-xl ${esgotado ? 'opacity-30 pointer-events-none' : ''}`}>
               <motion.div
-                whileHover={{ y: -5, scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
+                whileHover={realceSuspenso}
+                whileTap={toqueSuave}
                 onClick={() => !esgotado && setAppState('voice')}
                 className="glass-panel p-6 flex items-center gap-6 border-white/5 hover:border-gold/30 cursor-pointer group transition-all"
               >
@@ -877,8 +891,8 @@ Sincronicidade & Inteligência Artificial.
                       <motion.button
                         initial={{ opacity: 0, scale: 0.8 }}
                         animate={{ opacity: 1, scale: 1 }}
-                        whileHover={{ scale: 1.2, color: '#D4AF37' }}
-                        whileTap={{ scale: 0.9 }}
+                        whileHover={semMovimento ? undefined : { scale: 1.2, color: '#D4AF37' }}
+                        whileTap={semMovimento ? undefined : { scale: 0.9 }}
                         onClick={() => setInput('')}
                         className="absolute top-4 right-4 p-2 text-suave transition-colors"
                         title="Limpar texto"
@@ -887,8 +901,8 @@ Sincronicidade & Inteligência Artificial.
                       </motion.button>
                     )}
                     <motion.button
-                      whileTap={{ scale: 0.9 }}
-                      whileHover={{ scale: 1.1 }}
+                      whileTap={semMovimento ? undefined : { scale: 0.9 }}
+                      whileHover={semMovimento ? undefined : { scale: 1.1 }}
                       onClick={toggleRecording}
                       type="button"
                       className={`absolute bottom-6 right-6 p-3 rounded-full transition-all duration-500 z-30 cursor-pointer pointer-events-auto ${
@@ -1000,8 +1014,8 @@ Sincronicidade & Inteligência Artificial.
                 return (
                   <motion.div
                     key={`${selectionPhase}-${i}`}
-                    whileHover={{ y: -5, scale: 1.05 }}
-                    whileTap={{ scale: 0.95 }}
+                    whileHover={realceCarta}
+                    whileTap={toqueCarta}
                     onClick={() => handleCardClick(card)}
                     className={`relative aspect-[2/3] cursor-pointer transition-all duration-300 rounded-lg overflow-hidden border ${
                       isSelected 
@@ -1122,7 +1136,7 @@ Sincronicidade & Inteligência Artificial.
                           <motion.div
                             onClick={() => toggleReveal(card)}
                             animate={{ rotateY: isRevealed ? 180 : 0 }}
-                            transition={{ duration: 0.6, type: "spring", stiffness: 260, damping: 20 }}
+                            transition={viradaDaCarta}
                             className={`relative cursor-pointer preserve-3d group ${
                               emTabuleiro ? 'w-full aspect-[2/3]' : 'w-40 h-60'
                             }`}

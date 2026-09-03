@@ -105,3 +105,27 @@ body {
 .rotate-y-180 {
   transform: rotateY(180deg);
 }
+
+/* =====================================================================
+   MOVIMENTO REDUZIDO
+   Quem pede menos movimento no sistema tem sensibilidade vestibular, ou
+   simplesmente nao quer. Aqui o movimento para, mas o ESTADO continua
+   mudando: a carta troca de face sem girar, a selecao continua marcada
+   pela borda e pelo brilho. Nada de informacao mora so no movimento.
+   ===================================================================== */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+
+  /* A pena flutuante da espera e a unica animacao infinita do produto,
+     e fica exatamente onde a pessoa mais olha por ate dois minutos. */
+  .animate-float {
+    animation: none !important;
+  }
+}
