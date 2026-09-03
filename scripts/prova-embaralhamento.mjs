@@ -30,11 +30,21 @@ const TIRAGENS = JSON.parse(fs.readFileSync(path.join(RAIZ, 'src', 'tiragens.jso
 
 // Os três baralhos, lidos do próprio App.tsx para não haver segunda cópia.
 function leBaralho(nome) {
+  // Sem expressao regular de proposito: escape de barra invertida nao
+  // sobrevive ao caminho ate este arquivo, e ja quebrou o script duas vezes.
   const src = fs.readFileSync(path.join(RAIZ, 'src', 'App.tsx'), 'utf8');
-  const m = src.match(new RegExp(`const ${nome} = \[([\s\S]*?)\];`));
-  if (!m) throw new Error(`baralho ${nome} não encontrado em src/App.tsx`);
-  return [...m[1].matchAll(/'([^']+)'/g)].map((x) => x[1]);
+  const marca = 'const ' + nome + ' = [';
+  const i = src.indexOf(marca);
+  if (i < 0) throw new Error('baralho ' + nome + ' nao encontrado em src/App.tsx');
+  const j = src.indexOf('];', i);
+  const corpo = src.slice(i + marca.length, j);
+  const cartas = [];
+  const partes = corpo.split('"');
+  for (let k = 1; k < partes.length; k += 2) cartas.push(partes[k]);
+  if (!cartas.length) throw new Error('baralho ' + nome + ' veio vazio');
+  return cartas;
 }
+
 const BARALHOS = {
   maior: leBaralho('MAJOR_ARCANA'),
   menor: leBaralho('MINOR_ARCANA'),
