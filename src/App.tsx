@@ -150,7 +150,17 @@ export default function App() {
 
   useEffect(() => {
     if (appState !== 'loading') { setSegundosNaEspera(0); return; }
-    const t = setInterval(() => setSegundosNaEspera((s) => s + 1), 1000);
+    const t = setInterval(
+      () =>
+        setSegundosNaEspera((s) => {
+          // Aviso de espera prolongada uma vez so, e nao a cada segundo.
+          if (s + 1 === 60) {
+            setAnuncio('A interpretação está levando mais tempo do que o habitual. Sua pergunta e suas cartas continuam preservadas.');
+          }
+          return s + 1;
+        }),
+      1000
+    );
     return () => clearInterval(t);
   }, [appState]);
 
@@ -211,6 +221,10 @@ export default function App() {
   // provedor seria invenção, porque o servidor não sabe em que ponto o
   // Gemini está.
   const [segundosNaEspera, setSegundosNaEspera] = useState(0);
+  // Uma regiao viva so, com frase curta. Anuncia mudanca de estado real —
+  // nunca animacao, e nunca a identidade de carta que ainda esta virada
+  // para baixo, que quem enxerga tambem nao ve.
+  const [anuncio, setAnuncio] = useState('');
   const [isNarrating, setIsNarrating] = useState<number | null>(null);
   const [isGeneratingImage, setIsGeneratingImage] = useState<number | null>(null);
   const [showQuickAdvice, setShowQuickAdvice] = useState(false);
@@ -477,9 +491,11 @@ export default function App() {
       if (selectedMajor.includes(card) || selectedMajor.length >= maxCards) return;
       const newSelected = [...selectedMajor, card];
       setSelectedMajor(newSelected);
+      setAnuncio(`${newSelected.length} de ${maxCards} consagradas.`);
       if (newSelected.length === maxCards) {
         setTimeout(() => {
           setSelectionPhase('minor');
+          setAnuncio(`Arcanos Maiores completos. Agora Arcanos Menores: escolha ${maxCards} cartas.`);
           shuffleCards('minor');
         }, 600);
       }
@@ -487,9 +503,11 @@ export default function App() {
       if (selectedMinor.includes(card) || selectedMinor.length >= maxCards) return;
       const newSelected = [...selectedMinor, card];
       setSelectedMinor(newSelected);
+      setAnuncio(`${newSelected.length} de ${maxCards} consagradas.`);
       if (newSelected.length === maxCards) {
         setTimeout(() => {
           setSelectionPhase('gypsy');
+          setAnuncio(`Arcanos Menores completos. Agora Baralho Cigano: escolha ${maxCards} cartas.`);
           shuffleCards('gypsy');
         }, 600);
       }
@@ -497,6 +515,7 @@ export default function App() {
       if (selectedGypsy.includes(card) || selectedGypsy.length >= maxCards) return;
       const newSelected = [...selectedGypsy, card];
       setSelectedGypsy(newSelected);
+      setAnuncio(`${newSelected.length} de ${maxCards} consagradas.`);
     }
   };
 
@@ -576,6 +595,7 @@ Sincronicidade & Inteligência Artificial.
     setIsLoading(true);
     setError(null);
     setPodeTentarDeNovo(false);
+    setAnuncio('Leitura enviada. Isso pode levar alguns minutos. Suas cartas foram preservadas.');
 
     const userMessage: Message = {
       role: 'user',
@@ -633,6 +653,7 @@ Sincronicidade & Inteligência Artificial.
 
       setMessages(prev => [...prev, assistantMessage]);
       setPodeTentarDeNovo(false);
+      setAnuncio('Diagnóstico pronto.');
       setAppState('reading');
     } catch (err: any) {
       console.error("ERRO NA LEITURA DO ORÁCULO:", err);
@@ -646,6 +667,7 @@ Sincronicidade & Inteligência Artificial.
           'Não foi possível concluir a interpretação agora. Sua pergunta e suas cartas foram preservadas. Você não precisa realizar a tiragem novamente.'
       );
       setPodeTentarDeNovo(true);
+      setAnuncio('Não foi possível concluir a interpretação. Sua pergunta e suas cartas foram preservadas. Há um botão para tentar novamente.');
       setAppState('input');
     } finally {
       setIsLoading(false);
@@ -760,7 +782,9 @@ Sincronicidade & Inteligência Artificial.
             <Eye className="text-gold-texto w-5 h-5" />
           </div>
           <div onClick={handleNewReading} className="cursor-pointer">
-            <h1 className="serif text-xl font-semibold tracking-wide text-gold-texto uppercase">Oráculo da Sincronicidade</h1>
+            {/* Marca, nao titulo do documento: havia dois <h1> na mesma pagina. A
+                  classe continua a mesma, entao a aparencia nao muda. */}
+              <p className="serif text-xl font-semibold tracking-wide text-gold-texto uppercase">Oráculo da Sincronicidade</p>
             <p className="text-[10px] uppercase tracking-[0.2em] opacity-50 font-medium text-center">Inteligência Ancestral & Artificial</p>
           </div>
         </div>
@@ -779,7 +803,7 @@ Sincronicidade & Inteligência Artificial.
               <div className="flex items-center gap-2 border-r border-gold/10 pr-4 mr-2 hidden md:flex">
                 <button 
                   onClick={handleQuickAdvice}
-                  className="p-2 rounded-full text-suave hover:text-gold-texto hover:bg-gold/10 transition-all group relative"
+                  className="min-w-11 min-h-11 flex items-center justify-center rounded-full text-suave hover:text-gold-texto hover:bg-gold/10 transition-all group relative"
                   title="Sincronicidade Instantânea"
                 >
                   <Zap className="w-4 h-4" />
@@ -787,7 +811,7 @@ Sincronicidade & Inteligência Artificial.
                 </button>
                 <button 
                   onClick={() => setShowIntentionGuide(true)}
-                  className="p-2 rounded-full text-suave hover:text-gold-texto hover:bg-gold/10 transition-all group relative"
+                  className="min-w-11 min-h-11 flex items-center justify-center rounded-full text-suave hover:text-gold-texto hover:bg-gold/10 transition-all group relative"
                   title="Guia de Intenção"
                 >
                   <Compass className="w-4 h-4" />
@@ -795,7 +819,7 @@ Sincronicidade & Inteligência Artificial.
                 </button>
                 <button 
                   onClick={handleEnergyClearing}
-                  className="p-2 rounded-full text-suave hover:text-gold-texto hover:bg-gold/10 transition-all group relative"
+                  className="min-w-11 min-h-11 flex items-center justify-center rounded-full text-suave hover:text-gold-texto hover:bg-gold/10 transition-all group relative"
                   title="Limpeza Energética"
                 >
                   <Eye className={`w-4 h-4 ${isClearing ? 'animate-spin' : ''}`} />
@@ -805,7 +829,7 @@ Sincronicidade & Inteligência Artificial.
             )}
             <button 
               onClick={toggleTheme}
-              className={`p-2 rounded-full transition-all ${isDarkMode ? 'text-suave hover:text-gold-texto hover:bg-panel-bg' : 'text-suave hover:text-gold-texto hover:bg-panel-bg'}`}
+              className={`min-w-11 min-h-11 flex items-center justify-center rounded-full transition-all ${isDarkMode ? 'text-suave hover:text-gold-texto hover:bg-panel-bg' : 'text-suave hover:text-gold-texto hover:bg-panel-bg'}`}
               title={isDarkMode ? "Modo Claro" : "Modo Escuro"}
             >
               {isDarkMode ? <Moon className="w-5 h-5" /> : <Sun className="w-5 h-5" />}
@@ -953,7 +977,7 @@ Sincronicidade & Inteligência Artificial.
               
               <div className="text-center space-y-4">
                 <Feather className="w-8 h-8 text-gold-texto mx-auto animate-float" />
-                <h2 className="serif text-3xl text-gold-texto uppercase tracking-widest">Abra seu Coração</h2>
+                <h1 className="serif text-3xl text-gold-texto uppercase tracking-widest">Abra seu Coração</h1>
                 <p className="text-suave text-sm">Explique detalhadamente sua situação para uma resposta mais assertiva.</p>
               </div>
 
@@ -985,7 +1009,7 @@ Sincronicidade & Inteligência Artificial.
                       whileHover={semMovimento ? undefined : { scale: 1.1 }}
                       onClick={toggleRecording}
                       type="button"
-                      className={`absolute bottom-6 right-6 p-3 rounded-full transition-all duration-500 z-30 cursor-pointer pointer-events-auto ${
+                      className={`absolute bottom-6 right-6 min-w-11 min-h-11 flex items-center justify-center rounded-full transition-all duration-500 z-30 cursor-pointer pointer-events-auto ${
                         isRecording 
                           ? 'bg-red-500/20 text-red-500 animate-pulse shadow-[0_0_20px_rgba(239,68,68,0.3)] border border-red-500/50' 
                           : 'bg-gold/5 text-suave hover:text-gold-texto hover:bg-gold/10 border border-gold/10'
@@ -1054,9 +1078,9 @@ Sincronicidade & Inteligência Artificial.
             className="space-y-12 py-12"
           >
             <div className="text-center space-y-6">
-              <h2 className="serif text-4xl text-mystic-paper italic uppercase tracking-widest">
+              <h1 className="serif text-4xl text-mystic-paper italic uppercase tracking-widest">
                 {selectionPhase === 'major' ? 'Arcanos Maiores' : selectionPhase === 'minor' ? 'Arcanos Menores' : 'Baralho Cigano'}
-              </h2>
+              </h1>
               <p className="text-suave text-sm uppercase tracking-widest">
                 {selectionPhase === 'major' ? 'Escolha as forças arquetípicas' : selectionPhase === 'minor' ? 'Escolha as influências cotidianas' : 'Escolha os movimentos concretos'}
               </p>
@@ -1169,9 +1193,9 @@ Sincronicidade & Inteligência Artificial.
               <div className="absolute -top-2 -right-2 w-6 h-6 bg-gold rounded-full animate-ping" />
             </div>
             <div className="text-center space-y-3 max-w-md px-6">
-              <h3 className="serif text-3xl text-gold-texto italic">
+              <h1 className="serif text-3xl text-gold-texto italic">
                 Suas cartas foram preservadas. A leitura está sendo integrada.
-              </h3>
+              </h1>
               {/* Tempo decorrido é fato observável. Etapa do provedor seria
                   invenção: o servidor não sabe em que ponto o Gemini está,
                   e barra de progresso aqui seria progresso fingido. */}
@@ -1180,10 +1204,10 @@ Sincronicidade & Inteligência Artificial.
                   ? 'Isso pode levar alguns minutos. Você pode permanecer nesta página.'
                   : 'A interpretação está levando mais tempo do que o habitual. Sua pergunta e suas cartas continuam preservadas.'}
               </p>
-              <p
-                className="text-suave uppercase tracking-[0.3em] text-[10px] tabular-nums"
-                aria-live="polite"
-              >
+              {/* Sem aria-live aqui: anunciar o relogio faria o leitor de tela
+                  falar a cada segundo. O aviso de espera prolongada sai uma
+                  vez so, pela regiao viva do rodape. */}
+              <p className="text-suave uppercase tracking-[0.3em] text-[10px] tabular-nums">
                 {Math.floor(segundosNaEspera / 60)}:{String(segundosNaEspera % 60).padStart(2, '0')} decorrido
               </p>
             </div>
@@ -1199,7 +1223,7 @@ Sincronicidade & Inteligência Artificial.
             {/* Hierarchical Revelation Section */}
             <div className="space-y-24">
               <div className="flex flex-col items-center gap-6">
-                <h2 className="serif text-3xl text-gold-texto uppercase tracking-[0.4em]">Revelação do Campo</h2>
+                <h1 className="serif text-3xl text-gold-texto uppercase tracking-[0.4em]">Revelação do Campo</h1>
                 <button 
                   onClick={revealAll}
                   className="px-8 py-3 rounded-full bg-gold/10 border border-gold/30 text-gold-texto text-[10px] uppercase tracking-[0.3em] hover:bg-gold hover:text-sobre-ouro transition-all"
@@ -1215,7 +1239,7 @@ Sincronicidade & Inteligência Artificial.
               ].map((deck, deckIdx) => (
                 <div key={deckIdx} className="space-y-12">
                   <div className="flex flex-col items-center gap-2">
-                    <h3 className="serif text-2xl text-mystic-paper uppercase tracking-[0.3em] italic">{deck.title}</h3>
+                    <h2 className="serif text-2xl text-mystic-paper uppercase tracking-[0.3em] italic">{deck.title}</h2>
                     <p className="text-[10px] text-suave uppercase tracking-[0.4em]">{deck.type}</p>
                     <div className="h-px w-32 bg-gold/20 mt-4" />
                   </div>
@@ -1315,7 +1339,7 @@ Sincronicidade & Inteligência Artificial.
                 <div className="absolute top-8 right-8 flex gap-4">
                   <button
                     onClick={() => handleNarrate(msg.content, idx)}
-                    className={`p-3 rounded-full transition-all ${isNarrating === idx ? 'bg-gold text-sobre-ouro' : 'bg-panel-bg text-suave hover:text-gold-texto hover:bg-panel-border'}`}
+                    className={`min-w-11 min-h-11 flex items-center justify-center rounded-full transition-all ${isNarrating === idx ? 'bg-gold text-sobre-ouro' : 'bg-panel-bg text-suave hover:text-gold-texto hover:bg-panel-border'}`}
                     title="Ouvir a Profecia"
                   >
                     {isNarrating === idx ? (
@@ -1327,7 +1351,7 @@ Sincronicidade & Inteligência Artificial.
                   <button
                     onClick={() => handleGenerateImage(msg.content, idx)}
                     disabled={isGeneratingImage === idx || !!msg.generatedImage}
-                    className={`p-3 rounded-full transition-all ${isGeneratingImage === idx ? 'bg-gold text-sobre-ouro' : msg.generatedImage ? 'bg-gold/20 text-gold-texto cursor-default' : 'bg-panel-bg text-suave hover:text-gold-texto hover:bg-panel-border'}`}
+                    className={`min-w-11 min-h-11 flex items-center justify-center rounded-full transition-all ${isGeneratingImage === idx ? 'bg-gold text-sobre-ouro' : msg.generatedImage ? 'bg-gold/20 text-gold-texto cursor-default' : 'bg-panel-bg text-suave hover:text-gold-texto hover:bg-panel-border'}`}
                     title="Materializar Imagem"
                   >
                     {isGeneratingImage === idx ? (
@@ -1363,7 +1387,7 @@ Sincronicidade & Inteligência Artificial.
                 <div className="mt-20 pt-12 border-t border-white/5 flex flex-col items-center gap-8">
                   <div className="text-center space-y-2">
                     <p className="text-[10px] uppercase tracking-[0.4em] text-suave">Diagnóstico Concluído</p>
-                    <h4 className="serif text-xl text-gold-texto italic">O campo foi revelado. Como você deseja prosseguir?</h4>
+                    <h3 className="serif text-xl text-gold-texto italic">O campo foi revelado. Como você deseja prosseguir?</h3>
                   </div>
                   
                   <div className="flex flex-wrap justify-center gap-4">
@@ -1388,6 +1412,11 @@ Sincronicidade & Inteligência Artificial.
             ))}
           </motion.div>
         )}
+        {/* Regiao viva unica. Fora do fluxo visual, dentro do fluxo de leitura
+            de quem usa leitor de tela. */}
+        <p className="sr-only" role="status" aria-live="polite">
+          {anuncio}
+        </p>
       </main>
 
       <footer className="p-8 text-center">
