@@ -98,6 +98,47 @@ body {
   border-radius: 4px;
 }
 
+/* =====================================================================
+   NOME DA CARTA SOBREPOSTO PELO APLICATIVO
+   Este e o nome que o app desenha no CENTRO da arte revelada. Nao
+   confundir com o nome que a artista gravou no rodape de cada uma das
+   114 artes, dentro da moldura: aquele e pixel do arquivo e nao se
+   toca aqui nem em lugar nenhum.
+
+   O problema medido em 05/09/2026: o dourado atravessa 114 fundos
+   diferentes. Em "O Sol" ele cai sobre o disco solar; em "Rainha de
+   Ouros", sobre o pentaculo. Ouro sobre ouro nao tem separacao, e a
+   sombra difusa que existia antes nao resolve — sombra escurece a
+   vizinhanca da letra, nao desenha a borda dela.
+
+   A solucao e contorno, nao caixa: o preto fica so na espessura da
+   letra. Nada de tarja, nada de escurecer a arte — a arte e o produto.
+
+   'paint-order: stroke fill' importa: sem ele o tracado e desenhado
+   centrado na borda e come metade da espessura da letra por dentro,
+   engrossando o titulo. Com ele o ouro vem por cima e a forma da letra
+   fica intacta.
+   ===================================================================== */
+.nome-da-carta {
+  /* Fallback para quem nao tem tracado de texto: contorno simulado por
+     oito sombras solidas. Feio de escrever, mas e o que existe. */
+  text-shadow:
+    -1px -1px 0 #000,  0px -1px 0 #000,  1px -1px 0 #000,
+     1px  0px 0 #000,  1px  1px 0 #000,  0px  1px 0 #000,
+    -1px  1px 0 #000, -1px  0px 0 #000;
+}
+
+@supports (paint-order: stroke) and (-webkit-text-stroke: 1px black) {
+  .nome-da-carta {
+    paint-order: stroke fill;
+    -webkit-text-stroke: 0.85px #000;
+    /* Sombra discreta, so para descolar do fundo quando a arte tem
+       textura na mesma luminancia do contorno. Bem mais fraca que a
+       sombra anterior (0.8), porque agora ela nao trabalha sozinha. */
+    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.55);
+  }
+}
+
 @keyframes float {
   0% { transform: translateY(0px); }
   50% { transform: translateY(-10px); }

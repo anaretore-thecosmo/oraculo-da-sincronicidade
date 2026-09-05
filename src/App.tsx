@@ -1317,7 +1317,13 @@ Sincronicidade & Inteligência Artificial.
                                   nome gravado no rodapé, e escurecer aquela faixa apagaria
                                   justamente o que a artista desenhou para ser lido. */}
                               <div className="absolute inset-0 bg-gradient-to-t from-mystic-dark/30 via-transparent to-transparent" />
-                              <span className="serif text-xs text-gold-texto uppercase tracking-widest font-bold leading-tight relative z-10 drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)] px-2">{card}</span>
+                              {/* A legibilidade deste nome mora na classe
+                                  .nome-da-carta, em index.css, e nao em
+                                  utilitario solto aqui: o tratamento e um so
+                                  para os tres baralhos e as tres modalidades.
+                                  O que fica no Tailwind e tipografia — fonte,
+                                  tamanho, cor, caixa, espacamento. */}
+                              <span className="serif text-xs text-gold-texto uppercase tracking-widest font-bold leading-tight relative z-10 px-2 nome-da-carta">{card}</span>
                             </div>
                           </motion.div>
                           {/* O nome da casa vem da definição da tiragem, não de
